@@ -2,7 +2,10 @@
 Author: 
 Jack Duryea
 Waterland Lab
+Computational Epigenetics Section
 Baylor College of Medicine
+
+April 2018
 
 CpG-Net imputes missing CpG methylation
 states in CpG matrices.
@@ -53,6 +56,12 @@ class CpGNet():
 	def __init__(self, cpgDensity=2):
 		self.model = None
 		self.cpgDensity = cpgDensity
+		self.METHYLATED = 1
+		self.UNMETHYLATED = 0
+		self.MISSING = -1
+		self.methylated = 1
+		self.unmethylated = 0
+		self.unknown = -1
 		# default weights
 
 
@@ -96,14 +105,14 @@ class CpGNet():
 
 
 	def impute(self, Bins):
-
+		pass
 
 
 
 
 
 	# Returns a matrix encoding of a CpG matrix
-	def encode_input_matrix(m):
+	def encode_input_matrix(self,m):
 	    matrix = np.copy(m)
 	    n_cpgs = matrix.shape[1]
 	    matrix += 1 # deal wiht -1s
@@ -124,21 +133,27 @@ class CpGNet():
 	    return encoded_vector[0], num_reads
 
 
-   	METHYLATED = 1
-	UNMETHYLATED = 0
-	MISSING = -1
-	methylated = 1
-	unmethylated = 0
-	unknown = -1
 
-	def get_mean(sub_matrix, current_cpg_state):
-	        num_methy = np.count_nonzero(sub_matrix == METHYLATED)
-	        num_unmethy = np.count_nonzero(sub_matrix == UNMETHYLATED)
+
+
+	# finds the majority class of the given column, discounting the current cpg
+	def get_column_mean(self, matrix, col_i, current_cpg_state):
+	    sub=matrix[:,col_i]
+	    return self.get_mean(sub, current_cpg_state)
+
+	# finds the majority class of the given read, discounting the current cpg
+	def get_read_mean(self, matrix, read_i, current_cpg_state):
+	    sub=matrix[read_i,:]
+	    return self.get_mean(sub, current_cpg_state)
+
+	def get_mean(self, sub_matrix, current_cpg_state):
+	        num_methy = np.count_nonzero(sub_matrix == self.METHYLATED)
+	        num_unmethy = np.count_nonzero(sub_matrix == self.UNMETHYLATED)
 	        
-	        if current_cpg_state == METHYLATED:
+	        if current_cpg_state == self.METHYLATED:
 	            num_methy -= 1
 	        num_methy = max(0,num_methy)
-	        if current_cpg_state == UNMETHYLATED:
+	        if current_cpg_state == self.UNMETHYLATED:
 	            num_unmethy -= 1
 	        num_unmethy = max(0,num_unmethy )
 	        if float(num_methy + num_unmethy)==0:
@@ -151,59 +166,55 @@ class CpGNet():
 	        #     print "num_unmethy: ", num_unmethy
 	        return float(num_methy)/float(num_methy + num_unmethy)
 	        
-	# finds the majority class of the given column, discounting the current cpg
-	def get_column_mean(matrix, col_i, current_cpg_state):
-	    sub=matrix[:,col_i]
-	    return get_mean(sub, current_cpg_state)
-
-	# finds the majority class of the given read, discounting the current cpg
-	def get_read_mean(matrix, read_i, current_cpg_state):
-	    sub=matrix[read_i,:]
-	    return get_mean(sub, current_cpg_state)
+	
 	
 	# Returns X, y
 	# note: y can contain the labels 1,0, -1
 	def collectFeatures(self, bins):
+		print "hello"
 		X = []
 		Y = []
-		for M_i in tqdm(range(len(bins))):
-		    Bin = bins[M_i]
-		    M = Bin.matrix
-		    numReads = M.shape[0]
-		    density = M.shape[1]
-		    positions = Bin.positions
-		    
-		    col_means = np.nanmean(np.where(M != -1, M, np.nan), axis=0)
-		    row_means = np.nanmean(np.where(M != -1, M, np.nan), axis=1)
-		    for i in range(numReads):
-		        for j in range(density):
-		            state = M[i,j]
-	                cur_col_mean = get_column_mean(M, j, -1)
-	                
-	                read_mean = get_read_mean(M, i, state)
-	                
-	                adjacent_state_mean = None
-	                if j == 0: # left edge
-	                    adjacent_state_mean = M[i, 1]
-	                else if j == density-1: # right edge
+		for Bin in bins:
+			M = Bin.matrix
+			print "M:",M
+			numReads = M.shape[0]
+			density = M.shape[1]
+			positions = Bin.cpgPositions
+
+			col_means = np.nanmean(np.where(M != -1, M, np.nan), axis=0)
+			row_means = np.nanmean(np.where(M != -1, M, np.nan), axis=1)
+			for i in range(numReads):
+				for j in range(density):
+					state = M[i,j]
+					Y.append(state)
+					print "State:",state
+
+					cur_col_mean = self.get_column_mean(M, j, -1)
+
+					read_mean = self.get_read_mean(M, i, state)
+
+					adjacent_state_mean = None
+					if j == 0: # left edge
+						adjacent_state_mean = M[i, 1]
+					elif j == density-1: # right edge
 						adjacent_state_mean = M[i, density-2]
-	            	else:
-	                    adjacent_state_mean = (M[i, j-1] + M[i, j+1])/float(2)
+					else:
+						adjacent_state_mean = (M[i, j-1] + M[i, j+1])/float(2)
 
-	                encoding = encode_input_matrix(M)[0]
+					encoding = self.encode_input_matrix(M)[0]
 
-	                # record the relative differences in CpG positions
-	                differences = []
-	                for i in range(1, density):
-	                	differences.append(positions[i]-positions[i-1])
-	                data = [adjacent_state_mean, cur_col_mean, read_mean] + list(encoding)+ differences # + list(encoding)
-	                X.append(data)
+					# # record the relative differences in CpG positions
+					differences = []
+					for pos in range(1, density):
+						differences.append(positions[pos]-positions[pos-1])
+					data = [adjacent_state_mean, cur_col_mean, read_mean] + list(encoding)+ differences # + list(encoding)
+					X.append(data)
 
-	                Y.append(state)
 
 		X = np.array(X)
 		Y = np.array(Y)
 		Y.astype(int)
+		return X, Y
 
 
 
@@ -233,7 +244,6 @@ accuracy = np.sum(np.round(predictions) == y_test)/float(len(y_test)) # compute 
 ## For imputing
 ImputedBins = net.impute(bins)
 """
-
 
 
 
