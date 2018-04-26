@@ -1,3 +1,11 @@
+Jack Duryea (duryea@bcm.edu)
+Waterland Lab
+Computational Epigenetics Section
+Baylor College of Medicine
+
+April 2018
+
+
 # CpGNet
 A neural network approach to CpG imputation
 
