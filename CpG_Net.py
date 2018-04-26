@@ -12,42 +12,42 @@ states in CpG matrices.
 
 """
 
-from sklearn.preprocessing import Imputer
-from sklearn import linear_model
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import normalize 
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_curve, auc
-from sklearn import preprocessing
-from sklearn.preprocessing import PolynomialFeatures
-from tqdm import tqdm
-
-import math
-import keras
-import numpy as np
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Dropout
-
+# standard imports
 from scipy import stats
 import pandas as pd
 import numpy as np
 import cPickle as p
 import matplotlib.pyplot as plt
-import seaborn as sn
 import warnings
-from sklearn.model_selection import train_test_split
+import math
+import numpy as np
+import os
+import sys
+from tqdm import tqdm
 
+
+# sklearn imports
+from sklearn.preprocessing import normalize 
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_curve, auc
+from sklearn import preprocessing
+from sklearn.preprocessing import PolynomialFeatures
+
+
+# keras imports
+import keras
+from keras.models import Sequential
+from keras.layers import Dense, Activation, Dropout
+from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 # bin data type
 from CpG_Bin import Bin
 
+# warnings suck, turn thme off
 warnings.simplefilter("ignore", DeprecationWarning)
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore",category=DeprecationWarning)
     import md5, sha
-import os
-import sys
 
 
 
@@ -62,27 +62,43 @@ class CpGNet():
 		self.methylated = 1
 		self.unmethylated = 0
 		self.unknown = -1
-		# default weights
 
-
-	def fit(self, X_train, y_train, 
+	def fit(self, 
+			X_train, 
+			y_train, 
 			epochs=10,
 			batch_size=32,
 			val_split=0.2,
 			weight_file = "CpGNetWeights2.h5"
 			):
+		"""
+		Inputs: 
+		1. X_train,     numpy array, Contains feature vectors.
+		2. y_train,     numpy array, Contains labels for training data.
+		3. epochs,      integer,     Number of epochs to train for. Can be cut short if using early stopping.
+		4. batch_size,  integer,     Size of each training batch.
+		5. val_split,   float        Between 0 and 1, the proportion of X_train that is used for validation loss.
+		6. weight_file, string,      The name of the file to save the model weights to.
+	
+		Outputs: 
+		None, saves a weight file
+
+		Usage: 
+		CpGNet.fit(X_train, y_train)	
+		
+		"""
 
 		x_input_dim = X_train.shape[1]
 
 		self.model = Sequential()
-		self.model.add(Dense(1000, activation='relu',input_dim=x_input_dim))
-		self.model.add(Dropout(0.1))
+		self.model.add(Dense(10, activation='relu',input_dim=x_input_dim))
+		self.model.add(Dropout(1.0))
 
-		self.model.add(Dense(1000, activation='relu', input_dim=1000))
-		self.model.add(Dropout(0.1))
+		self.model.add(Dense(10, activation='relu', input_dim=10))
+		self.model.add(Dropout(1.0))
 
 		#output
-		self.model.add(Dense(1, activation='hard_sigmoid'))
+		self.model.add(Dense(1, activation='sigmoid'))
 
 		self.model.compile(optimizer='adam',
 		              loss='binary_crossentropy',
@@ -94,22 +110,93 @@ class CpGNet():
 		self.model.fit(X_train, y_train, 
 			epochs=epochs, 
 			batch_size=batch_size, 
-			callbacks=[earlystopper, checkpointer], 
+			#callbacks=[earlystopper, checkpointer], 
 			validation_split=val_split, 
 			verbose=True, 
 			shuffle=True)
 
 
+	# Load a saved model 
+	def loadWeights(self, weight_file):
+		"""
+		Inputs:
+		1. weight_file, string, name of file with saved model weights
+
+		Outputs:
+		None
+
+		Effects:
+		self.model is loaded with the provided weights
+		"""
+		self.model = load_model(weight_file)
+
+	# Make a prediction on the provided feature vectors using the trained model
 	def predict(self, X):
+		"""
+		Inputs: 
+		1. X, numpy array, contains feature vectors
+		
+		Outputs: 
+		1. 1-d numpy array of predicted labels
+
+		Usage: 
+		y_pred = CpGNet.predict(X)	
+
+		"""
 		return self.model.predict(X)
 
 
-	def impute(self, Bins):
-		pass
+	def impute(self, Bins, confidence_threshold=0.1):
+		"""
+		Inputs: 
+		1. Bins, list, contains CpG_Bins
+		2. confidence_threshold, float in [0,1], the required confidence of each imputation
+			defined as twice the distance from 0.5 (the decision boundary).
+
+		Outputs: 
+		1. List of CpG_Bins with missing data imputed
+
+		Usage: 
+		CpGNet.impute()	
+
+		"""
+		num_succesful_imputations = 0
+		num_failed_imputations = 0
+
+		for Bin in Bins:
+			matrix = Bin.matrix
+			features = self.collectFeatures([Bin])
+			print "features:",features[0]
+			pred = self.predict(features[0])
+			pred_i = 0
+			# look at each value in the matrix
+			for i in range(matrix.shape[0]):
+				for j in range(matrix.shape[1]):
+
+					state = matrix[i][j]
+					print "state: ",state
+					print "pred:  ",pred[pred_i]
+					if state == self.MISSING:
+						if np.abs(pred[pred_i] - 0.5) * 2 > confidence_threshold:
+							matrix[i][j] = np.round(pred[pred_i])
+							num_succesful_imputations += 1
+						else:
+							num_failed_imputations += 1
+
+
+					pred_i += 1
+
+		return num_succesful_imputations, num_failed_imputations
 
 
 
 
+
+
+
+
+
+	### Helper functions, for private use only ###
 
 	# Returns a matrix encoding of a CpG matrix
 	def encode_input_matrix(self,m):
@@ -159,11 +246,6 @@ class CpGNet():
 	        if float(num_methy + num_unmethy)==0:
 	            return -2
 
-	        # # return based on prior
-	        # if float(num_methy)/float(num_methy + num_unmethy) == 2:
-	        #     print "yo"
-	        #     print "num_methy: ",num_methy
-	        #     print "num_unmethy: ", num_unmethy
 	        return float(num_methy)/float(num_methy + num_unmethy)
 	        
 	
@@ -171,12 +253,10 @@ class CpGNet():
 	# Returns X, y
 	# note: y can contain the labels 1,0, -1
 	def collectFeatures(self, bins):
-		print "hello"
 		X = []
 		Y = []
 		for Bin in bins:
 			M = Bin.matrix
-			print "M:",M
 			numReads = M.shape[0]
 			density = M.shape[1]
 			positions = Bin.cpgPositions
@@ -187,7 +267,6 @@ class CpGNet():
 				for j in range(density):
 					state = M[i,j]
 					Y.append(state)
-					print "State:",state
 
 					cur_col_mean = self.get_column_mean(M, j, -1)
 

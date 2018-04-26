@@ -19,7 +19,7 @@ import cPickle as pickle
 
 
 # 1. How to create a bin
-cpgMatrix = np.array([[1,0],[0,1],[-1,1],[0,-1],[1,1]])
+cpgMatrix = np.array([[1,1],[-1,0],[1,1],[0,0],[1,-1]])
 binStartInc = 100 # left most genomic position
 binEndInc = 199 # right most genomic position
 binSize = 100 # bin width (in base pairs)
@@ -48,14 +48,27 @@ bins = [mybin]# more bins]
 net = CpGNet(cpgDensity=2)
 X, y = net.collectFeatures(bins) # extract features
 
-print "X:",X
-print "Y:",y
+
+# filter out cpgs that are missing
+notMissing = y!=-1
+X_train = X[notMissing]
+y_train = y[notMissing]
+
+print "X:",X_train
+print "Y:",y_train
 
 
+net.fit(X_train, y_train, weight_file ="jack-april-2018-chr19-mm10.h5", epochs=1000)
+#net.weights = "anthony-april-2018-chr19-mm10.h5"
+print net.predict(X_train)
+print y_train
 
 
-
-
+num_success, num_fail = net.impute(bins)
+print "number of success imputations:", num_success
+print "number of failed imputations :", num_fail
+for bin_ in bins:
+	print bin_.matrix
 
 
 
