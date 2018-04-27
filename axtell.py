@@ -431,14 +431,6 @@ output_file = args.o
 bin_size = int(args.b)
 
 
-# using_super_reads = False
-# chromosome_name = "chrT"
-# sam_file = "testsam.sam.txt"
-# output_file = "outtest.csv"
-# min_read_coverage = 0
-# min_cpg_count = 0
-# bin_size = 40
-
 
 # Program entry
 if __name__ == "__main__":
@@ -457,26 +449,18 @@ if __name__ == "__main__":
 	read_methylation_df = clean_data(read_methylation_df, chromosome_name)
 
 	# Filter by coverage
-	#read_methylation_df = filter_data(read_methylation_df, min_read_coverage, min_cpg_count)
 	bins = []
 	for cpg_data in read_methylation_df["Read Contributions"]:
 		mybin = make_cpg_matrix(cpg_data)
 		bins.append(mybin)
 
 
+
 	# # save pickel data
-	# with open("matrices.p",'wb') as fp:
-	# 	cPickle.dump(matrices,fp)
+	with open(output_file,'wb') as fp:
+		cPickle.dump(bins,fp)
 
-	# with open("positions.p",'wb') as fp2:
-	# 	cPickle.dump(positions,fp2)
-
-
-	# read_methylation_df["CpG Matrix"] = matrices
-	# read_methylation_df["CpG Positions"] = positions
-
-	# # # Save the data
-	# read_methylation_df.to_csv(output_file)
+	
 
 
 	print "Analysis complete"
