@@ -43,7 +43,7 @@ pickle.dump(mybin, open("binfile.p","wb"))
 binFromDisk = pickle.load(open("binfile.p","rb"))
 
 
-# 4. Feature extraction 
+# 4. Feature extraction  and CpGNet training
 bins = [mybin]# more bins]
 net = CpGNet(cpgDensity=2)
 X, y = net.collectFeatures(bins) # extract features
@@ -54,16 +54,12 @@ notMissing = y!=-1
 X_train = X[notMissing]
 y_train = y[notMissing]
 
-print "X:",X_train
-print "Y:",y_train
 
 
 net.fit(X_train, y_train, weight_file ="jack-april-2018-chr19-mm10.h5", epochs=1000)
 #net.weights = "anthony-april-2018-chr19-mm10.h5"
-print net.predict(X_train)
-print y_train
 
-
+# 5. Imputation
 num_success, num_fail = net.impute(bins)
 print "number of success imputations:", num_success
 print "number of failed imputations :", num_fail
