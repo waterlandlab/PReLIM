@@ -8,6 +8,9 @@ AXTELL
 
 Read-level Methylation Extractor
 
+
+Changelog:
+
 UPDATE 7-31-2017
 Includes a column that shows which CpGs in each read contribute to that read's methylation status  
 
@@ -15,6 +18,9 @@ UPDATE 10-30-2017
 Fixes a bug where reads report CpGs at sligthly different locations, causing extra missing values to appear
 Cleaned up the code and removed uncessary pieces of code
 
+
+UPDATE 4-26-2018
+Added capability to store objects as Bin objects
 
 Sample usage:
 python axtell.py -c chr19 -s debug.txt -o debugout.csv
@@ -24,7 +30,7 @@ python axtell.py -c chr19 -s debug.txt -o debugout.csv
 from scipy.stats.mstats import gmean
 from collections import defaultdict
 import multiprocessing as mp
-from sklearn import mixture
+from CpG_Bin import Bin
 import pandas as pd
 import numpy as np
 import linecache
@@ -168,14 +174,14 @@ def compute_read_methylation(read):
 	start_pos += guanine_correction_factor
 
 
-	# 'Place' CpG's in corresponding bins
+	# Place CpG's in corresponding bins
 	bin_cpg_data = defaultdict(lambda:[])
 	for i, dn in enumerate(methy_call):
-		if dn in ["Z","z"]: # if dinucleotide is a C
+		if dn in ["Z","z"]: # if nucleotide is a C
 			pos = start_pos+i
 			bin_name = get_bin_name(pos)
-			cpg_rel_pos  =  get_rel_pos(pos) # the cpgs position relative to it's bin
-			cpg_tup = (cpg_rel_pos,int(dn=="Z")) # Tuple representing position and methy of CpG locus
+			# cpg_rel_pos  =  get_rel_pos(pos) # the cpgs position relative to it's bin
+			cpg_tup = (pos, int(dn=="Z")) # Tuple representing position and methy of CpG locus
 
 			bin_cpg_data[bin_name].append(cpg_tup) # 1 if methylated, 0 else
 
@@ -230,24 +236,82 @@ def update_methy_with_cigar(methy_call, cigar):
     return updated_methy_call     
      
 
-# Creates a cpg matrix based on the read contribution data
+# Creates a cpg matrix based on the read contribution data in a bin
 def make_cpg_matrix(cpg_data):
-	cpg_matrix = np.zeros((len(cpg_data), bin_size))#.fill(-1)
-	cpg_matrix.fill(-1)
-	positions = set([])
-	for read_index in range(len(cpg_data)):
-		read = cpg_data[read_index]
-		for cpg in read[1]:
-			position = cpg[0]
-			positions.update({position})
-			methyStatus = cpg[1]
-			cpg_matrix[read_index,position-1] = methyStatus
 	
-	## filter column
-	cpg_matrix = np.transpose(cpg_matrix)
-	cpg_matrix = cpg_matrix[np.sum(cpg_matrix, axis=1) != -1 *len(cpg_data)]
 
-	return np.transpose(cpg_matrix), list(sorted(positions))
+	num_reads = len(cpg_data)
+
+
+
+	positions = set([])
+
+	# scan positions is first sweep
+	for read_index in range(num_reads):
+		read = cpg_data[read_index]
+		for cpg_i in range(len(read[1])):
+			cpg = read[1][cpg_i]
+			position = cpg[0]
+			methyStatus = cpg[1]
+			positions.update({position})
+
+	
+	# not all reads contain all positions, so finding all possible positions are necessary
+	positions = sorted(positions)
+
+	num_cpgs = len(positions)
+
+
+	# now create the cpg matrix
+	matrix = -1 * np.ones((num_reads, num_cpgs))
+
+	for read_index in range(num_reads):
+		read = cpg_data[read_index]
+		for cpg_i in range(len(read[1])):
+			cpg = read[1][cpg_i]
+			position = cpg[0]
+			methyStatus = cpg[1]
+			matrix[read_index, positions.index(position)] = methyStatus
+
+	bin_name = get_bin_name(positions[0])
+	bin_name -= bin_size # correction
+	binStart = bin_name
+	binEnd = bin_name + bin_size - 1
+
+	mybin = Bin(matrix=matrix, binStartInc=bin_name, binEndInc= binEnd, cpgPositions=positions, chromosome=chromosome_name, binSize=bin_size, verbose=True, tag1="Jack's demo data, April 2018")
+	
+	print "---------------"
+	print "matrix\n", mybin.matrix
+	print "bin start:", mybin.binStartInc
+	print "bin end:", mybin.binEndInc
+	print "positions:",positions
+
+
+
+
+	return mybin
+
+
+#	mybin = Bin()
+	
+
+
+	# cpg_matrix = np.zeros((len(cpg_data), bin_size))#.fill(-1)
+	# cpg_matrix.fill(-1)
+	# positions = set([])
+	# for read_index in range(len(cpg_data)):
+	# 	read = cpg_data[read_index]
+	# 	for cpg in read[1]:
+	# 		position = cpg[0]
+	# 		positions.update({position})
+	# 		methyStatus = cpg[1]
+	# 		cpg_matrix[read_index,position-1] = methyStatus
+	
+	# ## filter column
+	# cpg_matrix = np.transpose(cpg_matrix)
+	# cpg_matrix = cpg_matrix[np.sum(cpg_matrix, axis=1) != -1 *len(cpg_data)]
+
+	# return np.transpose(cpg_matrix), list(sorted(positions))
 
 
 
@@ -345,7 +409,6 @@ def get_methylation_patter_from_index(index):
 # Command line arguments
 des = "Axtell was written by Jack Duryea (duryea@bcm.edu), BCM 2017, Waterland Lab. This software is a custom methylation extractor that parses the methylation calls in a SAM file and built"
 des += "for the purpose of analyzing read-specific methylation in bis-seq data split by chromosome. "
-des += "The motivation is to find 200bp bins that contain a mixture of cells, computed using mixture model analysis.  "
 des += "For each read in the file, the program find the number of CpGs in the read that overlap a 200bp bin. If that number meets a certain filtering criterion, the program finds the average methylation of those CpGs and add this value to the bin. "
 des += "Once the read-average methylation values have been computed, mixture model analysis can be run on these values for each bin using GMM and optimized with EM. "
 des += "The output is a csv file. The first column is the bin name, the second column is the list of average read methylation values"
@@ -395,27 +458,25 @@ if __name__ == "__main__":
 
 	# Filter by coverage
 	#read_methylation_df = filter_data(read_methylation_df, min_read_coverage, min_cpg_count)
-	matrices = []
-	positions = []
+	bins = []
 	for cpg_data in read_methylation_df["Read Contributions"]:
-		matrix_data = make_cpg_matrix(cpg_data)
-		matrices.append(matrix_data[0])
-		positions.append(matrix_data[1])
+		mybin = make_cpg_matrix(cpg_data)
+		bins.append(mybin)
 
 
-	# save pickel data
-	with open("matrices.p",'wb') as fp:
-		cPickle.dump(matrices,fp)
+	# # save pickel data
+	# with open("matrices.p",'wb') as fp:
+	# 	cPickle.dump(matrices,fp)
 
-	with open("positions.p",'wb') as fp2:
-		cPickle.dump(positions,fp2)
+	# with open("positions.p",'wb') as fp2:
+	# 	cPickle.dump(positions,fp2)
 
 
-	read_methylation_df["CpG Matrix"] = matrices
-	read_methylation_df["CpG Positions"] = positions
+	# read_methylation_df["CpG Matrix"] = matrices
+	# read_methylation_df["CpG Positions"] = positions
 
-	# # Save the data
-	read_methylation_df.to_csv(output_file)
+	# # # Save the data
+	# read_methylation_df.to_csv(output_file)
 
 
 	print "Analysis complete"
