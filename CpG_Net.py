@@ -32,7 +32,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, auc
 from sklearn import preprocessing
 from sklearn.preprocessing import PolynomialFeatures
-
+from keras.layers.advanced_activations import LeakyReLU
 
 # keras imports
 import keras
@@ -91,29 +91,55 @@ class CpGNet():
 		x_input_dim = X_train.shape[1]
 
 		self.model = Sequential()
-		self.model.add(Dense(10, activation='relu',input_dim=x_input_dim))
-		self.model.add(Dropout(1.0))
+		self.model.add(Dense(100, activation='relu',input_dim=x_input_dim))
+		#self.model.add(LeakyReLU(alpha=.01))
+		
+		self.model.add(Dense(100, activation='relu'))
+		self.model.add(Dropout(0.5))
 
-		self.model.add(Dense(10, activation='relu', input_dim=10))
-		self.model.add(Dropout(1.0))
+		self.model.add(Dense(100, activation='relu'))
+		self.model.add(Dense(100, activation='relu'))
+
+		#self.model.add(LeakyReLU(alpha=.01))
+		#self.model.add(Dropout(0.2))
+
+		#self.model.add(Dropout(0.5))
+		# self.model.add(Dense(100, activation='linear',input_dim=x_input_dim))
+		# self.model.add(LeakyReLU(alpha=.001))
+		# self.model.add(Dropout(0.2))
+
+
+		#self.model.add(Dense(100, activation='linear'))
+		#self.model.add(LeakyReLU(alpha=.001))
+		#self.model.add(Dense(10, activation='linear'))
+		#self.model.add(LeakyReLU(alpha=.001))
 
 		#output
 		self.model.add(Dense(1, activation='sigmoid'))
 
-		self.model.compile(optimizer='adam',
+		adam = keras.optimizers.Adam(lr=0.001)
+
+		self.model.compile(optimizer=adam,
 		              loss='binary_crossentropy',
-		              metrics=['binary_crossentropy'])
+		              metrics=['accuracy'])
 		earlystopper = EarlyStopping(patience=5, verbose=1)
 		
-		checkpointer = ModelCheckpoint('CpGNetWeights', monitor='val_loss', verbose=1, save_best_only=True, mode="min")
+		checkpointer = ModelCheckpoint(weight_file, monitor='val_acc', verbose=1, save_best_only=True, mode="max")
 
-		self.model.fit(X_train, y_train, 
+		return self.model.fit(X_train, y_train, 
 			epochs=epochs, 
 			batch_size=batch_size, 
-			#callbacks=[earlystopper, checkpointer], 
+			callbacks=[earlystopper, checkpointer], 
 			validation_split=val_split, 
 			verbose=True, 
 			shuffle=True)
+
+
+	def score(self, X, y):
+		pred = self.model.predict(X)
+		pred_round = np.round(pred)
+		acc = len(pred_round==y)/float(len(y))
+		return self.model.score(X, y)
 
 
 	# Load a saved model 
@@ -253,40 +279,36 @@ class CpGNet():
 	# Returns X, y
 	# note: y can contain the labels 1,0, -1
 	def collectFeatures(self, bins):
+		print "collecting"
 		X = []
 		Y = []
-		for Bin in bins:
+		for Bin in tqdm(bins):
 			M = Bin.matrix
 			numReads = M.shape[0]
 			density = M.shape[1]
 			positions = Bin.cpgPositions
 
-			col_means = np.nanmean(np.where(M != -1, M, np.nan), axis=0)
-			row_means = np.nanmean(np.where(M != -1, M, np.nan), axis=1)
 			for i in range(numReads):
 				for j in range(density):
 					state = M[i,j]
 					Y.append(state)
-
-					cur_col_mean = self.get_column_mean(M, j, -1)
-
-					read_mean = self.get_read_mean(M, i, state)
-
-					adjacent_state_mean = None
-					if j == 0: # left edge
-						adjacent_state_mean = M[i, 1]
-					elif j == density-1: # right edge
-						adjacent_state_mean = M[i, density-2]
-					else:
-						adjacent_state_mean = (M[i, j-1] + M[i, j+1])/float(2)
-
+					
 					encoding = self.encode_input_matrix(M)[0]
 
 					# # record the relative differences in CpG positions
 					differences = []
+					differences.append(positions[0] - Bin.binStartInc) ## distance to left bin edge
+
 					for pos in range(1, density):
 						differences.append(positions[pos]-positions[pos-1])
-					data = [adjacent_state_mean, cur_col_mean, read_mean] + list(encoding)+ differences # + list(encoding)
+
+					differences.append(Bin.binEndInc - positions[-1]) ## distance to left bin edge
+
+					# j is the current index in the row
+					# M[] is the current row data
+					# encoding is the matrix encoding vector
+					# differences is the difference in positions of the cpgs
+					data = [j] + list(M[i]) + list(encoding) + differences
 					X.append(data)
 
 

@@ -23,6 +23,7 @@ class Bin():
 		binStartInc: integer, the starting, inclusive, chromosomal index of the bin.
 		binEndInc: integer, the ending, inclusive, chromosomal index of the bin.
 		cpgPositions: array of integers, the chromosomal positions of the CpGs in the bin.
+		sequence: string, nucleotide sequence (A,C,G,T)
 		encoding: array, a reduced representation of the bin's CpG matrix
 		missingToken: integer, the token that represents missing data in the matrix.
 		chromosome: string, the chromosome this bin resides in.
@@ -38,6 +39,7 @@ class Bin():
 			binStartInc, 
 			binEndInc, 
 			cpgPositions, 
+			sequence="",
 			encoding=None, 
 			missingToken= -1, 
 			chromosome="19", 
@@ -67,6 +69,7 @@ class Bin():
 		self.binStartInc = binStartInc
 		self.binEndInc = binEndInc
 		self.cpgPositions = cpgPositions
+		self.sequence = sequence
 		self.missingToken = missingToken
 		self.chromosome = chromosome
 		self.binSize = binSize
