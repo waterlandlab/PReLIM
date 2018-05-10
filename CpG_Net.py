@@ -91,16 +91,24 @@ class CpGNet():
 		x_input_dim = X_train.shape[1]
 
 		self.model = Sequential()
-		self.model.add(Dense(100, activation='relu',input_dim=x_input_dim))
+		self.model.add(Dense(1000, activation='linear',input_dim=x_input_dim))
+		self.model.add(LeakyReLU(alpha=.001))
+
 		#self.model.add(LeakyReLU(alpha=.01))
-		
-		self.model.add(Dense(100, activation='relu'))
+
+		self.model.add(Dropout(0.5))
+		self.model.add(Dense(500, activation='linear'))
+		self.model.add(LeakyReLU(alpha=.001))
+		self.model.add(Dropout(0.5))
+		self.model.add(Dense(100, activation='linear'))
+		self.model.add(LeakyReLU(alpha=.001))
 		self.model.add(Dropout(0.5))
 
-		self.model.add(Dense(100, activation='relu'))
-		self.model.add(Dense(100, activation='relu'))
+		# self.model.add(Dense(100, activation='linear'))
+		# self.model.add(LeakyReLU(alpha=.01))
 
-		#self.model.add(LeakyReLU(alpha=.01))
+		# self.model.add(Dense(100, activation='linear'))
+		# self.model.add(LeakyReLU(alpha=.01))
 		#self.model.add(Dropout(0.2))
 
 		#self.model.add(Dropout(0.5))
@@ -117,7 +125,7 @@ class CpGNet():
 		#output
 		self.model.add(Dense(1, activation='sigmoid'))
 
-		adam = keras.optimizers.Adam(lr=0.001)
+		adam = keras.optimizers.Adam(lr=0.0001)
 
 		self.model.compile(optimizer=adam,
 		              loss='binary_crossentropy',
@@ -135,11 +143,10 @@ class CpGNet():
 			shuffle=True)
 
 
-	def score(self, X, y):
-		pred = self.model.predict(X)
-		pred_round = np.round(pred)
-		acc = len(pred_round==y)/float(len(y))
-		return self.model.score(X, y)
+	def predict(X,y):
+		return self.model.predict(X,y)
+
+	
 
 
 	# Load a saved model 
@@ -308,7 +315,10 @@ class CpGNet():
 					# M[] is the current row data
 					# encoding is the matrix encoding vector
 					# differences is the difference in positions of the cpgs
-					data = [j] + list(M[i]) + list(encoding) + differences
+					row = np.copy(M[i])
+					row[j] = -1
+					#data = [j]  + list(encoding) + differences
+					data = [j] + list(row) + list(encoding) + differences
 					X.append(data)
 
 
@@ -316,6 +326,7 @@ class CpGNet():
 		Y = np.array(Y)
 		Y.astype(int)
 		return X, Y
+
 
 
 
