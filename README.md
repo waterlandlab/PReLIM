@@ -52,9 +52,9 @@ y_train = y[notMissing]
 net.fit(X_train, y_train, weight_file ="jack-april-2018-chr19-mm10.h5", epochs=1000)  
 
 ## 5. Imputation
-from CpG_Net import CpGNet
-from CpG_Bin import Bin
-import numpy as np 
+from CpG_Net import CpGNet  
+from CpG_Bin import Bin  
+import numpy as np   
 
 DENSITY = 5
 net = CpGNet(cpgDensity=DENSITY)  
