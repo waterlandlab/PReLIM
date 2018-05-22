@@ -57,8 +57,8 @@ from CpG_Bin import Bin
 import numpy as np 
 
 DENSITY = 5
-net = CpGNet(cpgDensity=DENSITY)
-net.loadWeights("CpGNet_3cpg_weights.h5")
+net = CpGNet(cpgDensity=DENSITY)  
+net.loadWeights("CpGNet_5cpg_weights.h5")
 ### the cpg matrix
 matrix = np.array([[0,0,0,1,-1],[0,0,0,0,0]],dtype=float)
 
