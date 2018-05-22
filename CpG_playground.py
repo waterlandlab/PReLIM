@@ -38,33 +38,36 @@ print "Species:            ", mybin.species
 print "Custom tag:         ", mybin.tag1
 
 
-# 3. Saving and loading 
-# pickle.dump(mybin, open("binfile.p","wb"))
-# binFromDisk = pickle.load(open("binfile.p","rb"))
-
-
-# 4. Feature extraction  and CpGNet training
-bins = [mybin]# more bins]
-net = CpGNet(cpgDensity=3)
-X, y = net.collectFeatures(bins) # extract features
-
-
-# filter out cpgs that are missing
-notMissing = y!=-1
-X_train = X[notMissing]
-y_train = y[notMissing]
 
 
 
-net.fit(X_train, y_train, weight_file ="jack-3cpg-test.h5", epochs=1000)
-#net.weights = "anthony-april-2018-chr19-mm10.h5"
+# 5. Imputation example in a bin with 5 cpgs and 2 reads
 
-# 5. Imputation
-num_success, num_fail = net.impute(bins)
-print "number of success imputations:", num_success
-print "number of failed imputations :", num_fail
-for bin_ in bins:
-	print bin_.matrix
+DENSITY = 5
+net = CpGNet(cpgDensity=DENSITY)
+net.loadWeights("CpGNet_3cpg_weights.h5")
+# the cpg matrix
+matrix = np.array([[0,0,0,1,-1],[0,0,0,0,0]],dtype=float)
+
+# positions of each cpg
+pos = np.array([1002,1004,1040,1050,1070])
+
+# left most position of bin
+bin_start_pos = 1000
+
+# right most position of bin
+bin_end_pos = 1100 
+
+# make the imputation, 
+predicted_matrix = net.impute(matrix, pos, bin_start_pos, bin_end_pos)
+
+# example output
+# array([[ 0.        ,  0.        ,  0.        ,  0.        ,  0.04091179],
+#        [ 0.        ,  0.        ,  0.        ,  0.        ,  0.        ]])
+
+
+
+
 
 
 

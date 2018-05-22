@@ -24,7 +24,10 @@ import numpy as np
 import os
 import sys
 from tqdm import tqdm
+import copy
 
+
+from collections import defaultdict
 
 # sklearn imports
 from sklearn.preprocessing import normalize 
@@ -92,17 +95,20 @@ class CpGNet():
 
 		self.model = Sequential()
 		self.model.add(Dense(1000, activation='linear',input_dim=x_input_dim))
-		self.model.add(LeakyReLU(alpha=.001))
+		self.model.add(LeakyReLU(alpha=.0001))
+
+		self.model.add(Dense(800, activation='linear',input_dim=x_input_dim))
+		self.model.add(LeakyReLU(alpha=.0001))
 
 		#self.model.add(LeakyReLU(alpha=.01))
 
 		self.model.add(Dropout(0.5))
 		self.model.add(Dense(500, activation='linear'))
-		self.model.add(LeakyReLU(alpha=.001))
-		self.model.add(Dropout(0.5))
+		self.model.add(LeakyReLU(alpha=.0001))
+		#self.model.add(Dropout(0.2))
 		self.model.add(Dense(100, activation='linear'))
-		self.model.add(LeakyReLU(alpha=.001))
-		self.model.add(Dropout(0.5))
+		self.model.add(LeakyReLU(alpha=.0001))
+		#self.model.add(Dropout(0.2))
 
 		# self.model.add(Dense(100, activation='linear'))
 		# self.model.add(LeakyReLU(alpha=.01))
@@ -132,6 +138,7 @@ class CpGNet():
 		              metrics=['accuracy'])
 		earlystopper = EarlyStopping(patience=5, verbose=1)
 		
+		weight_file = "CpGNet_"+str(self.cpgDensity) + "cpg_weights.h5"
 		checkpointer = ModelCheckpoint(weight_file, monitor='val_acc', verbose=1, save_best_only=True, mode="max")
 
 		return self.model.fit(X_train, y_train, 
@@ -179,7 +186,12 @@ class CpGNet():
 		return self.model.predict(X)
 
 
-	def impute(self, Bins, confidence_threshold=0.1):
+
+	# Imputes a matrix, useful when not much information is known
+	# positional data is still needed
+
+	# Imputes missing values in Bins
+	def impute(self, matrix, positions, bin_start, bin_end):
 		"""
 		Inputs: 
 		1. Bins, list, contains CpG_Bins
@@ -193,33 +205,60 @@ class CpGNet():
 		CpGNet.impute()	
 
 		"""
-		num_succesful_imputations = 0
-		num_failed_imputations = 0
+		X = []
 
-		for Bin in Bins:
-			matrix = Bin.matrix
-			features = self.collectFeatures([Bin])
-			print "features:",features[0]
-			pred = self.predict(features[0])
-			pred_i = 0
-			# look at each value in the matrix
-			for i in range(matrix.shape[0]):
-				for j in range(matrix.shape[1]):
+		numReads = matrix.shape[0]
+		density = matrix.shape[1]
 
-					state = matrix[i][j]
-					print "state: ",state
-					print "pred:  ",pred[pred_i]
-					if state == self.MISSING:
-						if np.abs(pred[pred_i] - 0.5) * 2 > confidence_threshold:
-							matrix[i][j] = np.round(pred[pred_i])
-							num_succesful_imputations += 1
-						else:
-							num_failed_imputations += 1
+		nan_copy = np.copy(matrix)
+		nan_copy[nan_copy == -1] = np.nan 
+		column_means = np.nanmean(nan_copy,axis=0)
+		row_means = np.nanmean(nan_copy,axis=1)
 
 
-					pred_i += 1
+		for i in range(numReads):
+			for j in range(density):
+				observed_state = matrix[i,j]
+				if observed_state != -1:
+					continue
+				
+			
+				#encoding = self.encode_input_matrix(observed_matrix)[0]
 
-		return num_succesful_imputations, num_failed_imputations
+				# # record the relative differences in CpG positions
+				rel_pos = []
+				rel_pos.append((positions[0] - bin_start)/100.0) ## distance to left bin edge
+				for pos in positions:
+					rel_pos.append((pos - bin_start)/100.0)
+				rel_pos.append((bin_end - positions[-1] + 1)/100.0) ## distance to left bin edge
+
+				row_mean = row_means[i]	
+				col_mean = column_means[j]
+				# j is the current index in the row
+				# M[] is the current row data
+				# encoding is the matrix encoding vector
+				# differences is the difference in positions of the cpgs
+				row = np.copy(matrix[i])
+				row[j] = -1
+				#data = [j]  + list(encoding) + differences
+				data = [row_mean] + [col_mean] + rel_pos + [row_mean] + [col_mean] + [j] + list(row)  #list(encoding)
+				X.append(data)
+
+
+		X = np.array(X)
+		predictions = self.predict(X)
+		k = 0
+		predicted_matrix = np.copy(matrix)
+		for i in range(predicted_matrix.shape[0]):
+			for j in range(predicted_matrix.shape[1]):
+				if predicted_matrix[i,j]==-1:
+					predicted_matrix[i,j] = predictions[k]
+					k +=1
+
+
+
+
+		return predicted_matrix
 
 
 
@@ -290,35 +329,45 @@ class CpGNet():
 		X = []
 		Y = []
 		for Bin in tqdm(bins):
-			M = Bin.matrix
-			numReads = M.shape[0]
-			density = M.shape[1]
+			observed_matrix = Bin.tag2["observed"]
+			truth_matrix = Bin.tag2["truth"]
+			numReads = observed_matrix.shape[0]
+			density = observed_matrix.shape[1]
 			positions = Bin.cpgPositions
+
+			nan_copy = np.copy(observed_matrix)
+			nan_copy[nan_copy == -1] = np.nan 
+			column_means = np.nanmean(nan_copy,axis=0)
+			row_means = np.nanmean(nan_copy,axis=1)
 
 			for i in range(numReads):
 				for j in range(density):
-					state = M[i,j]
+					observed_state = observed_matrix[i,j]
+					if observed_state != -1:
+						continue
+
+					state = truth_matrix[i,j]
 					Y.append(state)
 					
-					encoding = self.encode_input_matrix(M)[0]
+					#encoding = self.encode_input_matrix(observed_matrix)[0]
 
 					# # record the relative differences in CpG positions
-					differences = []
-					differences.append(positions[0] - Bin.binStartInc) ## distance to left bin edge
+					rel_pos = []
+					rel_pos.append((positions[0] - Bin.binStartInc)/100.0) ## distance to left bin edge
+					for pos in positions:
+						rel_pos.append((pos - Bin.binStartInc)/100.0)
+					rel_pos.append((Bin.binEndInc - positions[-1] + 1)/100.0) ## distance to left bin edge
 
-					for pos in range(1, density):
-						differences.append(positions[pos]-positions[pos-1])
-
-					differences.append(Bin.binEndInc - positions[-1]) ## distance to left bin edge
-
+					row_mean = row_means[i]
+					col_mean = column_means[j]
 					# j is the current index in the row
 					# M[] is the current row data
 					# encoding is the matrix encoding vector
 					# differences is the difference in positions of the cpgs
-					row = np.copy(M[i])
+					row = np.copy(observed_matrix[i])
 					row[j] = -1
 					#data = [j]  + list(encoding) + differences
-					data = [j] + list(row) + list(encoding) + differences
+					data = [row_mean] + [col_mean] + rel_pos + [row_mean] + [col_mean] + [j] + list(row)  #list(encoding)
 					X.append(data)
 
 
@@ -326,6 +375,99 @@ class CpGNet():
 		Y = np.array(Y)
 		Y.astype(int)
 		return X, Y
+
+
+
+	# returns a list of bins similar to the input
+	# but matrix rows with missing values are removed
+	def filter_bad_reads(self, bins):
+		filtered_bins = []
+		for Bin in bins:
+			newBin = copy.deepcopy(Bin)
+			matrix = newBin.matrix
+			# find rows with missing values
+			counts = np.count_nonzero(matrix==-1,axis=1)
+			idx = counts==0
+			matrix_filtered = matrix[idx]
+			newBin.matrix = matrix_filtered
+			filtered_bins.append(newBin)
+		return filtered_bins
+
+
+	# returns a mapping of dimensions to list of masks that can be used on data
+	# of that size.
+	# the missing pattern is in matrix form.
+	# -1 is missing, 2 is known
+	def extract_masks(self,bins):
+		masks = defaultdict(lambda:[])
+		for Bin in tqdm(bins):
+			matrix = np.copy(Bin.matrix)
+			matrix[matrix>=0]=2
+
+			min_missing = 10
+			if np.count_nonzero(matrix==-1) > min_missing:
+				masks[matrix.shape].append(matrix)
+
+		return masks
+
+
+
+
+
+
+	def advanced_feature_collect(self, bins):
+		X = [] # matrices
+		Y = [] # numerical data
+		Z = [] # labels
+
+
+		for Bin in tqdm(bins):
+			observed_matrix = Bin.tag2["observed"]
+
+
+			truth_matrix = Bin.tag2["truth"]
+			numReads = observed_matrix.shape[0]
+			density = observed_matrix.shape[1]
+			positions = Bin.cpgPositions
+
+			# copy so we can compute means while ignoring missing values
+			nan_copy = np.copy(observed_matrix)
+			nan_copy[nan_copy == -1] = np.nan 
+			column_means = np.nanmean(nan_copy,axis=0)
+			row_means = np.nanmean(nan_copy,axis=1)
+			
+			for i in range(numReads):
+				for j in range(density):
+
+					observed_state = observed_matrix[i,j]
+
+					# only record missing states
+					if observed_state != -1:
+						continue
+					state = truth_matrix[i,j]
+
+					rel_pos = []
+					rel_pos.append((positions[0] - Bin.binStartInc)/100.0) ## distance to left bin edge
+					for pos in positions:
+						rel_pos.append((pos - Bin.binStartInc)/100.0)
+					rel_pos.append((Bin.binEndInc - positions[-1] + 1)/100.0) ## distance to left bin edge
+
+					row_mean = row_means[i]
+					col_mean = column_means[j]
+					# give positions and current index of cpg
+					numerical_data = list(observed_matrix[i]) + [row_mean] + [col_mean] + rel_pos + [j] + [i] + [density] + [numReads]
+
+					X.append(observed_matrix)
+					Y.append(numerical_data)
+					Z.append(state)
+		
+		# convert to np arrays
+		X = np.array(X)
+		Y = np.array(Y)
+		Z = np.array(Z)
+		Z.astype(int)# labels need to be ints
+		return X, Y,Z
+
 
 
 
