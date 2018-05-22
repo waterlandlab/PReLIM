@@ -52,8 +52,24 @@ y_train = y[notMissing]
 net.fit(X_train, y_train, weight_file ="jack-april-2018-chr19-mm10.h5", epochs=1000)  
 
 ## 5. Imputation
-num_success, num_fail = net.impute(bins)  
-print "number of success imputations:", num_success  
-print "number of failed imputations :", num_fail  
-for bin_ in bins:  
-	print bin_.matrix  
+from CpG_Net import CpGNet
+from CpG_Bin import Bin
+import numpy as np 
+
+DENSITY = 5
+net = CpGNet(cpgDensity=DENSITY)
+net.loadWeights("CpGNet_3cpg_weights.h5")
+### the cpg matrix
+matrix = np.array([[0,0,0,1,-1],[0,0,0,0,0]],dtype=float)
+
+### positions of each cpg
+pos = np.array([1002,1004,1040,1050,1070])
+
+### left most position of bin
+bin_start_pos = 1000
+
+### right most position of bin
+bin_end_pos = 1100 
+
+### make the imputation, 
+predicted_matrix = net.impute(matrix, pos, bin_start_pos, bin_end_pos)
