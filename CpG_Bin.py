@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 """
 Author: 
 Jack Duryea
@@ -61,7 +63,7 @@ class Bin():
 			assert len(cpgPositions) == self.cpgDensity, "wrong number of positions"
 
 			if (not (species == "HG38")) and (not (species == "MM10")):
-				print "Warning, you are not supplying a common species type. You've been warned"	
+				print("Warning, you are not supplying a common species type. You've been warned")
 
 			assert self.readDepth > 0, "invalid read depth"
 
