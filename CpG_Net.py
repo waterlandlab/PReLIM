@@ -45,7 +45,7 @@ from keras.layers.advanced_activations import LeakyReLU
 
 # keras imports
 import keras
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Dense, Activation, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
