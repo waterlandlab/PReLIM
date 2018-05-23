@@ -326,7 +326,7 @@ class CpGNet():
 	# Returns X, y
 	# note: y can contain the labels 1,0, -1
 	def collectFeatures(self, bins):
-		print "collecting"
+		print("collecting")
 		X = []
 		Y = []
 		for Bin in tqdm(bins):
