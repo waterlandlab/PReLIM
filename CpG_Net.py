@@ -105,32 +105,14 @@ class CpGNet():
         self.model.add(Dense(800, activation='linear', input_dim=x_input_dim))
         self.model.add(LeakyReLU(alpha=.0001))
 
-        # self.model.add(LeakyReLU(alpha=.01))
-
         self.model.add(Dropout(0.5))
+
         self.model.add(Dense(500, activation='linear'))
         self.model.add(LeakyReLU(alpha=.0001))
-        # self.model.add(Dropout(0.2))
+
         self.model.add(Dense(100, activation='linear'))
         self.model.add(LeakyReLU(alpha=.0001))
-        # self.model.add(Dropout(0.2))
-
-        # self.model.add(Dense(100, activation='linear'))
-        # self.model.add(LeakyReLU(alpha=.01))
-
-        # self.model.add(Dense(100, activation='linear'))
-        # self.model.add(LeakyReLU(alpha=.01))
-        # self.model.add(Dropout(0.2))
-
-        # self.model.add(Dropout(0.5))
-        # self.model.add(Dense(100, activation='linear',input_dim=x_input_dim))
-        # self.model.add(LeakyReLU(alpha=.001))
-        # self.model.add(Dropout(0.2))
-
-        # self.model.add(Dense(100, activation='linear'))
-        # self.model.add(LeakyReLU(alpha=.001))
-        # self.model.add(Dense(10, activation='linear'))
-        # self.model.add(LeakyReLU(alpha=.001))
+        
 
         # output
         self.model.add(Dense(1, activation='sigmoid'))
@@ -192,15 +174,13 @@ class CpGNet():
     def impute(self, matrix, positions, bin_start, bin_end):
         """
 		Inputs: 
-		1. Bins, list, contains CpG_Bins
-		2. confidence_threshold, float in [0,1], the required confidence of each imputation
-			defined as twice the distance from 0.5 (the decision boundary).
+		1. matrix, a 2d np array representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+		2. positions, a 1d np array containing the chromosomal positions, left to right, of each cpg in the bin
+        3. bin_start, integer, the leftmost position of the bin, inclusive
+        4. bin_end, integer, the rightmost position of the bin, inclusive
 
 		Outputs: 
-		1. List of CpG_Bins with missing data imputed
-
-		Usage: 
-		CpGNet.impute()	
+		1. A 2d numpy array with predicted probabilities of methylation
 
 		"""
         X = []
@@ -219,6 +199,7 @@ class CpGNet():
                 if observed_state != -1:
                     continue
 
+                # encoding is the matrix encoding vector
                 # encoding = self.encode_input_matrix(observed_matrix)[0]
 
                 # # record the relative differences in CpG positions
@@ -232,8 +213,6 @@ class CpGNet():
                 col_mean = column_means[j]
                 # j is the current index in the row
                 # M[] is the current row data
-                # encoding is the matrix encoding vector
-                # differences is the difference in positions of the cpgs
                 row = np.copy(matrix[i])
                 row[j] = -1
                 # data = [j]  + list(encoding) + differences
@@ -242,7 +221,7 @@ class CpGNet():
 
         X = np.array(X)
         predictions = self.predict(X)
-        k = 0
+        k = 0 # keep track of prediction index for missing states
         predicted_matrix = np.copy(matrix)
         for i in range(predicted_matrix.shape[0]):
             for j in range(predicted_matrix.shape[1]):
@@ -303,7 +282,6 @@ class CpGNet():
     # Returns X, y
     # note: y can contain the labels 1,0, -1
     def collectFeatures(self, bins):
-        print("collecting")
         X = []
         Y = []
         for Bin in tqdm(bins):
@@ -345,8 +323,7 @@ class CpGNet():
                     row = np.copy(observed_matrix[i])
                     row[j] = -1
                     # data = [j]  + list(encoding) + differences
-                    data = [row_mean] + [col_mean] + rel_pos + [row_mean] + [col_mean] + [j] + list(
-                        row)  # list(encoding)
+                    data = [row_mean] + [col_mean] + rel_pos + [row_mean] + [col_mean] + [j] + list(row)  # list(encoding)
                     X.append(data)
 
         X = np.array(X)
@@ -437,28 +414,3 @@ class CpGNet():
         Z.astype(int)  # labels need to be ints
         return X, Y, Z
 
-
-#### Usage ###
-"""
-from CpGNet import CpGNet
-
-net = CpGNet() # load the model
-bins = loadData() # load the data, not part of CpGNet. "bins" is an array of CpG_bin objects
-
-
-## For training
-X, y = net.collectFeatures(bins) # extract features
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42) # train/test split
-net.fit(X_train, y_train) # train
-
-
-# For making validation predictions
-X, y = net.collectFeatures(bins)
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
-net.fit(X_train, y_train)
-predictions = net.predict(X_test) # make predictions
-accuracy = np.sum(np.round(predictions) == y_test)/float(len(y_test)) # compute accuracy
-
-## For imputing
-ImputedBins = net.impute(bins)
-"""
