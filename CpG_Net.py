@@ -50,13 +50,14 @@ from keras.layers import Dense, Activation, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 # bin data type
-from CpG_Bin import Bin
+from .CpG_Bin import Bin
 
 # warnings suck, turn thme off
-warnings.simplefilter("ignore", DeprecationWarning)
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    import md5, sha
+if sys.version_info[0] < 3:
+    warnings.simplefilter("ignore", DeprecationWarning)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        import md5, sha
 
 
 class CpGNet():
