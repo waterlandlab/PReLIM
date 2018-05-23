@@ -1,0 +1,6 @@
+# IDE junk
+.idea/
+__pycache__
+
+# Unzipped model weights
+*.h5
