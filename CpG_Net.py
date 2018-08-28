@@ -95,45 +95,94 @@ class CpGNet():
 		CpGNet.fit(X_train, y_train)	
 		
 		"""
+        convInput = Input(shape=(max_depth,CPG_DENSITY,1), dtype='float', name='input2')
 
-        x_input_dim = X_train.shape[1]
+        filter_size = CPG_DENSITY
+        stride = filter_size
 
-        self.model = Sequential()
-        self.model.add(Dense(1000, activation='linear', input_dim=x_input_dim))
-        self.model.add(LeakyReLU(alpha=.0001))
+        convLayer = Dropout(0.2)(convInput) # dropout input to simulate noise
+        convLayer = Conv2D(32, kernel_size=(2,2), strides=2, padding="same",activation="linear")(convLayer)
+        convLayer = LeakyReLU(alpha=.001)(convLayer)
+        convLayer = Conv2D(16, kernel_size=(2,2), strides=2, padding="same",activation="linear")(convLayer)
+        convLayer = LeakyReLU(alpha=.001)(convLayer)
+        convLayer = Conv2D(8, kernel_size=(2,2), strides=2, padding="same",activation="linear")(convLayer)
+        convLayer = LeakyReLU(alpha=.001)(convLayer)
 
-        self.model.add(Dense(800, activation='linear', input_dim=x_input_dim))
-        self.model.add(LeakyReLU(alpha=.0001))
+        #convLayer = MaxPooling2D()(convLayer)
 
-        self.model.add(Dropout(0.5))
+        convLayer = Flatten()(convLayer)
 
-        self.model.add(Dense(500, activation='linear'))
-        self.model.add(LeakyReLU(alpha=.0001))
+        #convLayer = Flatten()(convInput)
+        #convLayer = Dense(1000, activation="relu")(convLayer)
 
-        self.model.add(Dense(100, activation='linear'))
-        self.model.add(LeakyReLU(alpha=.0001))
+        # Numerical Module
+        numericalInput = Input(shape=(Y[0].size,), dtype='float', name='input1')
+        layer1 = Dropout(0.2)(numericalInput) # dropout on input to simulate noise
+        layer1 = Dense(1000, activation="linear")(layer1)
+        layer1 = LeakyReLU(alpha=.01)(layer1)
+
+
+        layer1 = Dense(100, activation="linear")(layer1)
+        layer1 = Dropout(0.5)(layer1)
+        layer1 = LeakyReLU(alpha=.01)(layer1)
+
+        layer1 = Dense(10, activation="linear")(layer1)
+        layer1 = LeakyReLU(alpha=.01)(layer1)
+
+        # Combined Module
+
+        combined = keras.layers.concatenate([convLayer, layer1])
+        combined = Dense(1000, activation="linear")(combined)
+        combined = LeakyReLU(alpha=.01)(combined)
+        combined = Dropout(0.5)(combined)
+
+        combined = Dense(800, activation="linear")(combined)
+        combined = LeakyReLU(alpha=.01)(combined)
+        combined = Dropout(0.5)(combined)
+        combined = Dense(400, activation="linear")(combined)
+
+        combined = LeakyReLU(alpha=.01)(combined)
+        combined = Dropout(0.5)(combined)
+        combined = Dense(1, activation="sigmoid")(combined)
+
+        # x_input_dim = X_train.shape[1]
+
+        # self.model = Sequential()
+        # self.model.add(Dense(1000, activation='linear', input_dim=x_input_dim))
+        # self.model.add(LeakyReLU(alpha=.0001))
+
+        # self.model.add(Dense(800, activation='linear', input_dim=x_input_dim))
+        # self.model.add(LeakyReLU(alpha=.0001))
+
+        # self.model.add(Dropout(0.5))
+
+        # self.model.add(Dense(500, activation='linear'))
+        # self.model.add(LeakyReLU(alpha=.0001))
+
+        # self.model.add(Dense(100, activation='linear'))
+        # self.model.add(LeakyReLU(alpha=.0001))
         
 
-        # output
-        self.model.add(Dense(1, activation='sigmoid'))
+        # # output
+        # self.model.add(Dense(1, activation='sigmoid'))
 
-        adam = keras.optimizers.Adam(lr=0.0001)
+        # adam = keras.optimizers.Adam(lr=0.0001)
 
-        self.model.compile(optimizer=adam,
-                           loss='binary_crossentropy',
-                           metrics=['accuracy'])
-        earlystopper = EarlyStopping(patience=5, verbose=1)
+        # self.model.compile(optimizer=adam,
+        #                    loss='binary_crossentropy',
+        #                    metrics=['accuracy'])
+        # earlystopper = EarlyStopping(patience=5, verbose=1)
 
-        weight_file = "CpGNet_" + str(self.cpgDensity) + "cpg_weights.h5"
-        checkpointer = ModelCheckpoint(weight_file, monitor='val_acc', verbose=1, save_best_only=True, mode="max")
+        # weight_file = "CpGNet_" + str(self.cpgDensity) + "cpg_weights.h5"
+        # checkpointer = ModelCheckpoint(weight_file, monitor='val_acc', verbose=1, save_best_only=True, mode="max")
 
-        return self.model.fit(X_train, y_train,
-                              epochs=epochs,
-                              batch_size=batch_size,
-                              callbacks=[earlystopper, checkpointer],
-                              validation_split=val_split,
-                              verbose=True,
-                              shuffle=True)
+        # return self.model.fit(X_train, y_train,
+        #                       epochs=epochs,
+        #                       batch_size=batch_size,
+        #                       callbacks=[earlystopper, checkpointer],
+        #                       validation_split=val_split,
+        #                       verbose=True,
+        #                       shuffle=True)
 
     def predict(X, y):
         return self.model.predict(X, y)
