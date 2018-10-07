@@ -72,6 +72,25 @@ class CpGNet():
         self.unmethylated = 0
         self.unknown = -1
 
+
+
+
+
+    def train(self, bin_matrices, positions):
+        # bin_matrices: a list of cpg matrices 
+        # positions: a list of position vectors, contains the positions of the cpgs for each bin in bin_matrices
+
+        complete_bins = filter_missing_data( all_bins )
+        shuffle(complete_bins)
+        masked_bins = apply_masks( complete_bins, all_bins )
+
+
+        X, y = net.collectFeatures( masked_bins ) # extract features
+
+
+
+
+
     def fit(self,
             X_train,
             y_train,
@@ -80,66 +99,73 @@ class CpGNet():
             val_split=0.2,
             weight_file="CpGNetWeights2.h5"
             ):
-        """
-		Inputs: 
-		1. X_train,     numpy array, Contains feature vectors.
-		2. y_train,     numpy array, Contains labels for training data.
-		3. epochs,      integer,     Number of epochs to train for. Can be cut short if using early stopping.
-		4. batch_size,  integer,     Size of each training batch.
-		5. val_split,   float        Between 0 and 1, the proportion of X_train that is used for validation loss.
-		6. weight_file, string,      The name of the file to save the model weights to.
-	
-		Outputs: 
-		None, saves a weight file
+            """
+    		Inputs: 
+    		1. X_train,     numpy array, Contains feature vectors.
+    		2. y_train,     numpy array, Contains labels for training data.
+    		3. epochs,      integer,     Number of epochs to train for. Can be cut short if using early stopping.
+    		4. batch_size,  integer,     Size of each training batch.
+    		5. val_split,   float        Between 0 and 1, the proportion of X_train that is used for validation loss.
+    		6. weight_file, string,      The name of the file to save the model weights to.
+    	
+    		Outputs: 
+    		None, saves a weight file
 
-		Usage: 
-		CpGNet.fit(X_train, y_train)	
-		
-		"""
-        x_input_dim = X_train.shape[1]
+    		Usage: 
+    		CpGNet.fit(X_train, y_train)	
+    		
+    		"""
+            x_input_dim = X_train.shape[1]
 
-        self.model = Sequential()
+            self.model = Sequential()
 
-        # Hidden layers
-        self.model.add(Dense(1000, activation='linear',input_dim=x_input_dim))
-        self.model.add(LeakyReLU(alpha=.001))
-        self.model.add(Dropout(0.5))
+            # Hidden layers
+            self.model.add(Dense(1000, activation='linear',input_dim=x_input_dim))
+            self.model.add(LeakyReLU(alpha=.001))
+            self.model.add(Dropout(0.5))
 
-        self.model.add(Dense(800, activation='linear',input_dim=x_input_dim))
-        self.model.add(LeakyReLU(alpha=.001))
-        self.model.add(Dropout(0.5))
+            self.model.add(Dense(800, activation='linear',input_dim=x_input_dim))
+            self.model.add(LeakyReLU(alpha=.001))
+            self.model.add(Dropout(0.5))
 
-        self.model.add(Dense(500, activation='linear'))
-        self.model.add(LeakyReLU(alpha=.001))
-        self.model.add(Dropout(0.5))
+            self.model.add(Dense(500, activation='linear'))
+            self.model.add(LeakyReLU(alpha=.001))
+            self.model.add(Dropout(0.5))
 
-        self.model.add(Dense(100, activation='linear'))
-        self.model.add(LeakyReLU(alpha=.001))
-        self.model.add(Dropout(0.5))
+            self.model.add(Dense(100, activation='linear'))
+            self.model.add(LeakyReLU(alpha=.001))
+            self.model.add(Dropout(0.5))
 
-        # Output layer predicts methylation status of a single CpG
-        self.model.add(Dense(1, activation='sigmoid'))
+            # Output layer predicts methylation status of a single CpG
+            self.model.add(Dense(1, activation='sigmoid'))
 
-        adam = keras.optimizers.Adam(lr=0.00001)
+            adam = keras.optimizers.Adam(lr=0.00001)
 
-        self.model.compile(optimizer=adam,
-                      loss='binary_crossentropy',
-                      metrics=['accuracy'])
+            self.model.compile(optimizer=adam,
+                          loss='binary_crossentropy',
+                          metrics=['accuracy'])
 
-        earlystopper = EarlyStopping(patience=5, verbose=1)
-        checkpointer = ModelCheckpoint(weight_file, monitor='val_acc', verbose=1, save_best_only=True, mode="max")
+            earlystopper = EarlyStopping(patience=5, verbose=1)
+            checkpointer = ModelCheckpoint(weight_file, monitor='val_acc', verbose=1, save_best_only=True, mode="max")
 
-        # Displays the model's structure
-        print self.model.summary()
+            # Displays the model's structure
+            print self.model.summary()
 
 
-        return self.model.fit(X_train, y_train, 
-            epochs=epochs, 
-            batch_size=batch_size, 
-            callbacks=[earlystopper, checkpointer], 
-            validation_split=val_split, 
-            verbose=True, 
-            shuffle=True)
+            return self.model.fit(X_train, y_train, 
+                epochs=epochs, 
+                batch_size=batch_size, 
+                callbacks=[earlystopper, checkpointer], 
+                validation_split=val_split, 
+                verbose=True, 
+                shuffle=True)
+
+
+
+
+
+
+
 
 
     # Return a vector of predicted classes 
@@ -376,7 +402,6 @@ class CpGNet():
             filtered_bins.append(newBin)
         return filtered_bins
 
-
     # returns a mapping of dimensions to list of masks that can be used on data
     # of that size.
     # the missing pattern is in matrix form.
@@ -395,3 +420,29 @@ class CpGNet():
         return masks
 
   
+    def _apply_masks( filtered_bins, all_bins ):
+        masks = du.extract_masks( all_bins )
+        ready_bins = []
+
+        for Bin in filtered_bins:
+            truth_matrix = Bin.matrix
+            m_shape = truth_matrix.shape
+            if m_shape in masks:
+                if len( masks [ m_shape ] ) > 0:
+                    mask = random.choice(masks[m_shape])
+                    observed = np.minimum(truth_matrix, mask)
+                    Bin.tag2 = {"truth":truth_matrix, "observed":observed, "mask":mask}
+                    ready_bins.append(Bin)
+
+        print "done masking"
+        return ready_bins
+
+    # get a set of bins with no missing data
+    def _filter_missing_data( bins,min_read_depth=10 ):
+        cpg_bins_complete = du.filter_bad_reads(bins)
+        # secondary depth filter
+        cpg_bins_complete_depth = [bin_ for bin_ in cpg_bins_complete if bin_.matrix.shape[0] >= min_read_depth]
+        print "done filtering"
+        return cpg_bins_complete_depth
+
+
