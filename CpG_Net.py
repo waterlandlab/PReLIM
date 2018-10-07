@@ -102,19 +102,19 @@ class CpGNet():
 
         # Hidden layers
         self.model.add(Dense(1000, activation='linear',input_dim=x_input_dim))
-        self.model.add(LeakyReLU(alpha=.0001))
+        self.model.add(LeakyReLU(alpha=.001))
         self.model.add(Dropout(0.5))
 
         self.model.add(Dense(800, activation='linear',input_dim=x_input_dim))
-        self.model.add(LeakyReLU(alpha=.0001))
+        self.model.add(LeakyReLU(alpha=.001))
         self.model.add(Dropout(0.5))
 
         self.model.add(Dense(500, activation='linear'))
-        self.model.add(LeakyReLU(alpha=.0001))
+        self.model.add(LeakyReLU(alpha=.001))
         self.model.add(Dropout(0.5))
 
         self.model.add(Dense(100, activation='linear'))
-        self.model.add(LeakyReLU(alpha=.0001))
+        self.model.add(LeakyReLU(alpha=.001))
         self.model.add(Dropout(0.5))
 
         # Output layer predicts methylation status of a single CpG
@@ -125,8 +125,8 @@ class CpGNet():
         self.model.compile(optimizer=adam,
                       loss='binary_crossentropy',
                       metrics=['accuracy'])
-        earlystopper = EarlyStopping(patience=5, verbose=1)
 
+        earlystopper = EarlyStopping(patience=5, verbose=1)
         checkpointer = ModelCheckpoint(weight_file, monitor='val_acc', verbose=1, save_best_only=True, mode="max")
 
         # Displays the model's structure
@@ -141,8 +141,37 @@ class CpGNet():
             verbose=True, 
             shuffle=True)
 
-    def predict(X, y):
-        return self.model.predict(X, y)
+
+    # Return a vector of predicted classes 
+    def predict_classes(self, X):
+        """
+        Inputs: 
+        1. X, numpy array, contains feature vectors
+        
+        Outputs: 
+        1. 1-d numpy array of prediction values
+
+        Usage: 
+        y_pred = CpGNet.predict_classes(X)  
+
+        """
+        return self.model.predict_classes(X)
+    
+    # Return a vector of probabilities for methylation
+    def predict(self, X):
+        """
+        Inputs: 
+        1. X, numpy array, contains feature vectors
+        
+        Outputs: 
+        1. 1-d numpy array of predicted class labels
+
+        Usage: 
+        y_pred = CpGNet.predict(X)  
+
+        """
+        return self.model.predict(X)
+
 
     # Load a saved model
     def loadWeights(self, weight_file):
@@ -158,20 +187,7 @@ class CpGNet():
 		"""
         self.model = load_model(weight_file)
 
-    # Make a prediction on the provided feature vectors using the trained model
-    def predict(self, X):
-        """
-		Inputs: 
-		1. X, numpy array, contains feature vectors
-		
-		Outputs: 
-		1. 1-d numpy array of predicted labels
-
-		Usage: 
-		y_pred = CpGNet.predict(X)	
-
-		"""
-        return self.model.predict(X)
+    
 
     # Imputes a matrix, useful when not much information is known
     # positional data is still needed
@@ -206,7 +222,7 @@ class CpGNet():
                     continue
 
                 # encoding is the matrix encoding vector
-                # encoding = self.encode_input_matrix(observed_matrix)[0]
+                # encoding = self._encode_input_matrix(observed_matrix)[0]
 
                 # # record the relative differences in CpG positions
                 rel_pos = []
@@ -237,13 +253,19 @@ class CpGNet():
 
         return predicted_matrix
 
+
+
+
+
+
+
     ### Helper functions, for private use only ###
 
     # Returns a matrix encoding of a CpG matrix
-    def encode_input_matrix(self, m):
+    def _encode_input_matrix(self, m):
         matrix = np.copy(m)
         n_cpgs = matrix.shape[1]
-        matrix += 1  # deal wiht -1s
+        matrix += 1  # deal with -1s
         base_3_vec = np.power(3, np.arange(n_cpgs - 1, -1, -1))
         #
         encodings = np.dot(base_3_vec, matrix.T)
@@ -261,16 +283,16 @@ class CpGNet():
         return encoded_vector[0], num_reads
 
     # finds the majority class of the given column, discounting the current cpg
-    def get_column_mean(self, matrix, col_i, current_cpg_state):
+    def _get_column_mean(self, matrix, col_i, current_cpg_state):
         sub = matrix[:, col_i]
-        return self.get_mean(sub, current_cpg_state)
+        return self._get_mean(sub, current_cpg_state)
 
     # finds the majority class of the given read, discounting the current cpg
-    def get_read_mean(self, matrix, read_i, current_cpg_state):
+    def _get_read_mean(self, matrix, read_i, current_cpg_state):
         sub = matrix[read_i, :]
-        return self.get_mean(sub, current_cpg_state)
+        return self._get_mean(sub, current_cpg_state)
 
-    def get_mean(self, sub_matrix, current_cpg_state):
+    def _get_mean(self, sub_matrix, current_cpg_state):
         num_methy = np.count_nonzero(sub_matrix == self.METHYLATED)
         num_unmethy = np.count_nonzero(sub_matrix == self.UNMETHYLATED)
 
@@ -287,7 +309,8 @@ class CpGNet():
 
     # Returns X, y
     # note: y can contain the labels 1,0, -1
-    def collectFeatures(self, bins):
+    def _collectFeatures(self, bins):
+        print "collecting"
         X = []
         Y = []
         for Bin in tqdm(bins):
@@ -298,27 +321,27 @@ class CpGNet():
             positions = Bin.cpgPositions
 
             nan_copy = np.copy(observed_matrix)
-            nan_copy[nan_copy == -1] = np.nan
-            column_means = np.nanmean(nan_copy, axis=0)
-            row_means = np.nanmean(nan_copy, axis=1)
+            nan_copy[nan_copy == -1] = np.nan 
+            column_means = np.nanmean(nan_copy,axis=0)
+            row_means = np.nanmean(nan_copy,axis=1)
 
             for i in range(numReads):
                 for j in range(density):
-                    observed_state = observed_matrix[i, j]
+                    observed_state = observed_matrix[i,j]
                     if observed_state != -1:
                         continue
 
-                    state = truth_matrix[i, j]
+                    state = truth_matrix[i,j]
                     Y.append(state)
-
-                    # encoding = self.encode_input_matrix(observed_matrix)[0]
+                    
+                    encoding = self._encode_input_matrix(observed_matrix)[0]
 
                     # # record the relative differences in CpG positions
                     rel_pos = []
-                    rel_pos.append((positions[0] - Bin.binStartInc) / 100.0)  ## distance to left bin edge
+                    rel_pos.append((positions[0] - Bin.binStartInc)/100.0) ## distance to left bin edge
                     for pos in positions:
-                        rel_pos.append((pos - Bin.binStartInc) / 100.0)
-                    rel_pos.append((Bin.binEndInc - positions[-1] + 1) / 100.0)  ## distance to left bin edge
+                        rel_pos.append((pos - Bin.binStartInc)/100.0)
+                    rel_pos.append((Bin.binEndInc - positions[-1] + 1)/100.0) ## distance to left bin edge
 
                     row_mean = row_means[i]
                     col_mean = column_means[j]
@@ -328,9 +351,10 @@ class CpGNet():
                     # differences is the difference in positions of the cpgs
                     row = np.copy(observed_matrix[i])
                     row[j] = -1
-                    # data = [j]  + list(encoding) + differences
-                    data = [row_mean] + [col_mean] + rel_pos + [row_mean] + [col_mean] + [j] + list(row)  # list(encoding)
+
+                    data = [row_mean] + [col_mean] + rel_pos +  [i, j] + list(row) +  list(encoding)
                     X.append(data)
+
 
         X = np.array(X)
         Y = np.array(Y)
@@ -339,7 +363,7 @@ class CpGNet():
 
     # returns a list of bins similar to the input
     # but matrix rows with missing values are removed
-    def filter_bad_reads(self, bins):
+    def _filter_bad_reads(self, bins):
         filtered_bins = []
         for Bin in bins:
             newBin = copy.deepcopy(Bin)
@@ -352,71 +376,22 @@ class CpGNet():
             filtered_bins.append(newBin)
         return filtered_bins
 
+
     # returns a mapping of dimensions to list of masks that can be used on data
     # of that size.
     # the missing pattern is in matrix form.
     # -1 is missing, 2 is known
-    def extract_masks(self, bins):
+    def _extract_masks(self, bins):
         masks = defaultdict(lambda: [])
         for Bin in tqdm(bins):
             matrix = np.copy(Bin.matrix)
             matrix[matrix >= 0] = 2
 
-            min_missing = 10
+            #min_missing = 10
+            min_missing = 1 # must have at least 1 missing value
             if np.count_nonzero(matrix == -1) > min_missing:
                 masks[matrix.shape].append(matrix)
 
         return masks
 
-    def advanced_feature_collect(self, bins):
-        X = []  # matrices
-        Y = []  # numerical data
-        Z = []  # labels
-
-        for Bin in tqdm(bins):
-            observed_matrix = Bin.tag2["observed"]
-
-            truth_matrix = Bin.tag2["truth"]
-            numReads = observed_matrix.shape[0]
-            density = observed_matrix.shape[1]
-            positions = Bin.cpgPositions
-
-            # copy so we can compute means while ignoring missing values
-            nan_copy = np.copy(observed_matrix)
-            nan_copy[nan_copy == -1] = np.nan
-            column_means = np.nanmean(nan_copy, axis=0)
-            row_means = np.nanmean(nan_copy, axis=1)
-
-            for i in range(numReads):
-                for j in range(density):
-
-                    observed_state = observed_matrix[i, j]
-
-                    # only record missing states
-                    if observed_state != -1:
-                        continue
-                    state = truth_matrix[i, j]
-
-                    rel_pos = []
-                    rel_pos.append((positions[0] - Bin.binStartInc) / 100.0)  ## distance to left bin edge
-                    for pos in positions:
-                        rel_pos.append((pos - Bin.binStartInc) / 100.0)
-                    rel_pos.append((Bin.binEndInc - positions[-1] + 1) / 100.0)  ## distance to left bin edge
-
-                    row_mean = row_means[i]
-                    col_mean = column_means[j]
-                    # give positions and current index of cpg
-                    numerical_data = list(observed_matrix[i]) + [row_mean] + [col_mean] + rel_pos + [j] + [i] + [
-                        density] + [numReads]
-
-                    X.append(observed_matrix)
-                    Y.append(numerical_data)
-                    Z.append(state)
-
-        # convert to np arrays
-        X = np.array(X)
-        Y = np.array(Y)
-        Z = np.array(Z)
-        Z.astype(int)  # labels need to be ints
-        return X, Y, Z
-
+  
