@@ -60,6 +60,7 @@ if sys.version_info[0] < 3:
         import md5, sha
 
 
+
 class CpGNet():
     def __init__(self, cpgDensity=2):
         self.model = None
