@@ -33,9 +33,9 @@ import sys
 from tqdm import tqdm
 import copy
 import time
-
+from random import shuffle
 from collections import defaultdict
-
+import random
 # sklearn imports
 from sklearn.preprocessing import normalize
 from sklearn.model_selection import train_test_split
@@ -51,7 +51,7 @@ from keras.layers import Dense, Activation, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 # bin data type
-from .CpG_Bin import Bin
+#from .CpG_Bin import Bin
 
 # warnings suck, turn thme off
 if sys.version_info[0] < 3:
@@ -61,11 +61,9 @@ if sys.version_info[0] < 3:
 		import md5, sha
 
 
-# Assumptions"
-# Must be 100 bp bins
 
-
-class Bin():
+# TODO: most of these fields are redundant in our application
+class CpGBin():
 	""" 
 	Constructor for a bin
 
@@ -91,13 +89,13 @@ class Bin():
 			#relative_positions
 			binStartInc=None, 
 			binEndInc=None, 
-			cpgPositions, 
+			cpgPositions=None, 
 			sequence="",
 			encoding=None, 
 			missingToken= -1, 
-			chromosome="19", 
+			chromosome=None, 
 			binSize=100, 
-			species="HG38", 
+			species="MM10", 
 			verbose=True, 
 			tag1=None, 
 			tag2=None):
@@ -106,22 +104,11 @@ class Bin():
 		self.cpgDensity = matrix.shape[1]
 		self.readDepth = matrix.shape[0]
 		
-		# if verbose:
-		#     assert binSize > 0, "invalid bin size"
-		#     assert binStartInc < binEndInc, "invalid start and end indices"
-		#     assert binEndInc - binStartInc == binSize - 1
-		#     # TODO: add more assertions
-		#     assert len(cpgPositions) == self.cpgDensity, "wrong number of positions"
+		
 
-		#     if (not (species == "HG38")) and (not (species == "MM10")):
-		#         print "Warning, you are not supplying a common species type. You've been warned"    
-
-		#     assert self.readDepth > 0, "invalid read depth"
-
-		self.matrix = matrix
+		self.matrix = np.array(matrix, dtype=float)
 		self.binStartInc = binStartInc
 		self.binEndInc = binEndInc
-		self.relative_positions = relative_positions
 		self.cpgPositions = cpgPositions
 		self.sequence = sequence
 		self.missingToken = missingToken
@@ -146,28 +133,32 @@ class CpGNet():
 		self.unknown = -1
 
 
-
-	def train(self, bin_matrices, relative_positions, weight_file="CpGNetWeights"):
+	def train(self, bin_matrices, weight_file="CpGNetWeights.h5"):
 		# bin_matrices: a list of cpg matrices 
-		# relative_positions: a list of position vectors, contains the relative positions of the cpgs for each bin in bin_matrices
 		bins = []
 
 		# convert to bin objects for ease of use
-		for matrix, positions in zip(bin_matrices, relative_positions):
-			Bin = Bin(matrix=matrix)
-
+		for matrix in bin_matrices:
+			mybin = CpGBin(matrix=matrix)
+			bins.append(mybin)
+		print ("bins:",bins)
 		# find bins with no missing data
-		complete_bins = filter_missing_data( bins )
+		complete_bins = _filter_missing_data( bins )
 		shuffle(complete_bins)
-
+		print ("complete_bins:",complete_bins)
 		# apply masks
-		masked_bins = apply_masks( complete_bins, all_bins )
+		masked_bins = _apply_masks( complete_bins, bins )
+		print ("masked_bins",len(masked_bins))
+
+		print("masked_bins0",masked_bins[0].tag2)
+		print("masked_bins1",masked_bins[1].tag2)
+		print("masked_bins2",masked_bins[2].tag2)
 
 		# extract features
-		X, y = net.collectFeatures( masked_bins ) 
-
-
-		self.fit(X,y)
+		X, y = self._collectFeatures( masked_bins ) 
+		print ("X:",X)
+		# Train the neural network model
+		self.fit(X, y, weight_file = weight_file)
 
 
 	def fit(self,
@@ -176,7 +167,7 @@ class CpGNet():
 			epochs=10,
 			batch_size=32,
 			val_split=0.2,
-			weight_file="CpGNetWeights2.h5"
+			weight_file="CpGNetWeights.h5"
 			):
 		"""
 		Inputs: 
@@ -228,7 +219,7 @@ class CpGNet():
 		checkpointer = ModelCheckpoint(weight_file, monitor='val_acc', verbose=1, save_best_only=True, mode="max")
 
 		# Displays the model's structure
-		print self.model.summary()
+		print (self.model.summary())
 
 
 		return self.model.fit(X_train, y_train, 
@@ -298,13 +289,11 @@ class CpGNet():
 	# positional data is still needed
 
 	# Imputes missing values in Bins
-	def impute(self, matrix, positions, bin_start, bin_end):
+	def impute(self, matrix):
 		"""
 		Inputs: 
 		1. matrix, a 2d np array representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
-		2. positions, a 1d np array containing the chromosomal positions, left to right, of each cpg in the bin
-		3. bin_start, integer, the leftmost position of the bin, inclusive
-		4. bin_end, integer, the rightmost position of the bin, inclusive
+		
 
 		Outputs: 
 		1. A 2d numpy array with predicted probabilities of methylation
@@ -323,6 +312,7 @@ class CpGNet():
 		for i in range(numReads):
 			for j in range(density):
 				observed_state = matrix[i, j]
+				encoding = self._encode_input_matrix(observed_matrix)[0]
 				if observed_state != -1:
 					continue
 
@@ -330,11 +320,11 @@ class CpGNet():
 				# encoding = self._encode_input_matrix(observed_matrix)[0]
 
 				# # record the relative differences in CpG positions
-				rel_pos = []
-				rel_pos.append((positions[0] - bin_start) / 100.0)  ## distance to left bin edge
-				for pos in positions:
-					rel_pos.append((pos - bin_start) / 100.0)
-				rel_pos.append((bin_end - positions[-1] + 1) / 100.0)  ## distance to left bin edge
+				# rel_pos = []
+				# rel_pos.append((positions[0] - bin_start) / 100.0)  ## distance to left bin edge
+				# for pos in positions:
+				# 	rel_pos.append((pos - bin_start) / 100.0)
+				# rel_pos.append((bin_end - positions[-1] + 1) / 100.0)  ## distance to left bin edge
 
 				row_mean = row_means[i]
 				col_mean = column_means[j]
@@ -343,7 +333,8 @@ class CpGNet():
 				row = np.copy(matrix[i])
 				row[j] = -1
 				# data = [j]  + list(encoding) + differences
-				data = [row_mean] + [col_mean] + rel_pos + [row_mean] + [col_mean] + [j] + list(row)  # list(encoding)
+				#data = [row_mean] + [col_mean] + rel_pos + [row_mean] + [col_mean] + [j] + list(row)  # list(encoding)
+				data = [row_mean] + [col_mean] +  [i, j] + list(row) +  list(encoding)
 				X.append(data)
 
 		X = np.array(X)
@@ -388,6 +379,7 @@ class CpGNet():
 		return encoded_vector[0], num_reads
 
 	# finds the majority class of the given column, discounting the current cpg
+	
 	def _get_column_mean(self, matrix, col_i, current_cpg_state):
 		sub = matrix[:, col_i]
 		return self._get_mean(sub, current_cpg_state)
@@ -415,7 +407,6 @@ class CpGNet():
 	# Returns X, y
 	# note: y can contain the labels 1,0, -1
 	def _collectFeatures(self, bins):
-		print "collecting"
 		X = []
 		Y = []
 		for Bin in tqdm(bins):
@@ -425,9 +416,10 @@ class CpGNet():
 
 			numReads = observed_matrix.shape[0]
 			density = observed_matrix.shape[1]
-			positions = Bin.cpgPositions
-
+			#positions = Bin.cpgPositions
 			nan_copy = np.copy(observed_matrix)
+			
+
 			nan_copy[nan_copy == -1] = np.nan 
 			column_means = np.nanmean(nan_copy,axis=0)
 			row_means = np.nanmean(nan_copy,axis=1)
@@ -469,62 +461,63 @@ class CpGNet():
 		Y.astype(int)
 		return X, Y
 
-	# returns a list of bins similar to the input
-	# but matrix rows with missing values are removed
-	def _filter_bad_reads(self, bins):
-		filtered_bins = []
-		for Bin in bins:
-			newBin = copy.deepcopy(Bin)
-			matrix = newBin.matrix
-			# find rows with missing values
-			counts = np.count_nonzero(matrix == -1, axis=1)
-			idx = counts == 0
-			matrix_filtered = matrix[idx]
-			newBin.matrix = matrix_filtered
-			filtered_bins.append(newBin)
-		return filtered_bins
+# returns a list of bins similar to the input
+# but matrix rows with missing values are removed
+def _filter_bad_reads(bins):
+	filtered_bins = []
+	for Bin in bins:
+		newBin = copy.deepcopy(Bin)
+		matrix = newBin.matrix
 
-	# returns a mapping of dimensions to list of masks that can be used on data
-	# of that size.
-	# the missing pattern is in matrix form.
-	# -1 is missing, 2 is known
-	def _extract_masks(self, bins):
-		masks = defaultdict(lambda: [])
-		for Bin in tqdm(bins):
-			matrix = np.copy(Bin.matrix)
-			matrix[matrix >= 0] = 2
+		# find rows with missing values
+		counts = np.count_nonzero(matrix == -1, axis=1)
+		idx = counts == 0
+		matrix_filtered = matrix[idx]
+		newBin.matrix = matrix_filtered
+		filtered_bins.append(newBin)
 
-			#min_missing = 10
-			min_missing = 1 # must have at least 1 missing value
-			if np.count_nonzero(matrix == -1) > min_missing:
-				masks[matrix.shape].append(matrix)
+	return filtered_bins
 
-		return masks
+# returns a mapping of dimensions to list of masks that can be used on data
+# of that size.
+# the missing pattern is in matrix form.
+# -1 is missing, 2 is known
+def _extract_masks( bins):
+	masks = defaultdict(lambda: [])
+	for Bin in tqdm(bins):
+		matrix = np.copy(Bin.matrix)
+		matrix[matrix >= 0] = 2
+
+		#min_missing = 10
+		min_missing = 1 # must have at least 1 missing value
+		if np.count_nonzero(matrix == -1) >= min_missing:
+			masks[matrix.shape].append(matrix)
+
+	return masks
 
   
-	def _apply_masks( filtered_bins, all_bins ):
-		masks = du.extract_masks( all_bins )
-		ready_bins = []
+def _apply_masks( filtered_bins, all_bins ):
+	
+	masks = _extract_masks( all_bins )
+	ready_bins = []
 
-		for Bin in filtered_bins:
-			truth_matrix = Bin.matrix
-			m_shape = truth_matrix.shape
-			if m_shape in masks:
-				if len( masks [ m_shape ] ) > 0:
-					mask = random.choice(masks[m_shape])
-					observed = np.minimum(truth_matrix, mask)
-					Bin.tag2 = {"truth":truth_matrix, "observed":observed, "mask":mask}
-					ready_bins.append(Bin)
+	for Bin in filtered_bins:
+		truth_matrix = Bin.matrix
+		m_shape = truth_matrix.shape
+		if m_shape in masks:
+			if len( masks [ m_shape ] ) > 0:
+				mask = random.choice(masks[m_shape])
+				observed = np.minimum(truth_matrix, mask)
+				Bin.tag2 = {"truth":truth_matrix, "observed":observed, "mask":mask}
+				ready_bins.append(Bin)
 
-		print "done masking"
-		return ready_bins
+	return ready_bins
 
-	# get a set of bins with no missing data
-	def _filter_missing_data( bins,min_read_depth=10 ):
-		cpg_bins_complete = du.filter_bad_reads(bins)
-		# secondary depth filter
-		cpg_bins_complete_depth = [bin_ for bin_ in cpg_bins_complete if bin_.matrix.shape[0] >= min_read_depth]
-		print "done filtering"
-		return cpg_bins_complete_depth
+# get a set of bins with no missing data
+def _filter_missing_data( bins, min_read_depth=1 ):
+	cpg_bins_complete = _filter_bad_reads(bins)
+	# secondary depth filter
+	cpg_bins_complete_depth = [bin_ for bin_ in cpg_bins_complete if bin_.matrix.shape[0] >= min_read_depth]
+	return cpg_bins_complete_depth
 
 
