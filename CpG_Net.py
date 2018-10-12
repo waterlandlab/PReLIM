@@ -50,8 +50,6 @@ from keras.models import Sequential, load_model
 from keras.layers import Dense, Activation, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
-# bin data type
-#from .CpG_Bin import Bin
 
 # warnings suck, turn thme off
 if sys.version_info[0] < 3:
@@ -59,7 +57,6 @@ if sys.version_info[0] < 3:
 	with warnings.catch_warnings():
 		warnings.filterwarnings("ignore", category=DeprecationWarning)
 		import md5, sha
-
 
 
 # TODO: most of these fields are redundant in our application
@@ -141,22 +138,17 @@ class CpGNet():
 		for matrix in bin_matrices:
 			mybin = CpGBin(matrix=matrix)
 			bins.append(mybin)
-		print ("bins:",bins)
+		
 		# find bins with no missing data
 		complete_bins = _filter_missing_data( bins )
 		shuffle(complete_bins)
-		print ("complete_bins:",complete_bins)
+		
 		# apply masks
 		masked_bins = _apply_masks( complete_bins, bins )
-		print ("masked_bins",len(masked_bins))
-
-		print("masked_bins0",masked_bins[0].tag2)
-		print("masked_bins1",masked_bins[1].tag2)
-		print("masked_bins2",masked_bins[2].tag2)
 
 		# extract features
 		X, y = self._collectFeatures( masked_bins ) 
-		print ("X:",X)
+
 		# Train the neural network model
 		self.fit(X, y, weight_file = weight_file)
 
@@ -285,16 +277,13 @@ class CpGNet():
 
 	
 
-	# Imputes a matrix, useful when not much information is known
-	# positional data is still needed
-
+	# TODO: vectorize this computation?
 	# Imputes missing values in Bins
 	def impute(self, matrix):
 		"""
 		Inputs: 
-		1. matrix, a 2d np array representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+		1. matrix, a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
 		
-
 		Outputs: 
 		1. A 2d numpy array with predicted probabilities of methylation
 
@@ -308,11 +297,13 @@ class CpGNet():
 		nan_copy[nan_copy == -1] = np.nan
 		column_means = np.nanmean(nan_copy, axis=0)
 		row_means = np.nanmean(nan_copy, axis=1)
+		
+		encoding = self._encode_input_matrix(matrix)[0]
 
 		for i in range(numReads):
 			for j in range(density):
 				observed_state = matrix[i, j]
-				encoding = self._encode_input_matrix(observed_matrix)[0]
+				
 				if observed_state != -1:
 					continue
 
