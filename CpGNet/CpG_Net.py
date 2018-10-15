@@ -21,10 +21,10 @@ import numpy as np
 
 try:
 	import cPickle as p
-except ModuleNotFoundError:
+except ImportError:
 	import pickle as p
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import warnings
 import math
 import numpy as np
