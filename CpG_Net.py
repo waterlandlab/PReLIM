@@ -183,20 +183,20 @@ class CpGNet():
 
 		# Hidden layers
 		self.model.add(Dense(1000, activation='linear',input_dim=x_input_dim))
-		self.model.add(LeakyReLU(alpha=.001))
-		self.model.add(Dropout(0.5))
+		self.model.add(LeakyReLU(alpha=.0001))
+		#self.model.add(Dropout(0.5))
 
 		self.model.add(Dense(800, activation='linear',input_dim=x_input_dim))
-		self.model.add(LeakyReLU(alpha=.001))
+		self.model.add(LeakyReLU(alpha=.0001))
 		self.model.add(Dropout(0.5))
 
 		self.model.add(Dense(500, activation='linear'))
-		self.model.add(LeakyReLU(alpha=.001))
+		self.model.add(LeakyReLU(alpha=.0001))
 		self.model.add(Dropout(0.5))
 
 		self.model.add(Dense(100, activation='linear'))
-		self.model.add(LeakyReLU(alpha=.001))
-		self.model.add(Dropout(0.5))
+		self.model.add(LeakyReLU(alpha=.0001))
+		#self.model.add(Dropout(0.5))
 
 		# Output layer predicts methylation status of a single CpG
 		self.model.add(Dense(1, activation='sigmoid'))
