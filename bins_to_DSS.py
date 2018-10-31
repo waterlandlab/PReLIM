@@ -22,12 +22,18 @@ where chr is the chromosome,
 ps is the position, N is the number of reads covering
 that CpG, and X is the number of methylated reads at that
 position.
-"""
 
+
+Example Usage:
+python bins_to_DSS.py 19 /home/jduryea/CpGNet/data/neuron_ListerMukamel_GSM1173786_mm_neun_pos/bin_data/NEUN_POSchr19_2CpGbins.p > outfile.txt
+"""
+# 
 
 from __future__ import print_function
-from CpG_Net import CpGBin
 import sys
+sys.path.append('/home/jduryea/CpGNet/util')
+from CpG_Bin import Bin
+
 import numpy as np
 import cPickle as p
 
@@ -40,10 +46,10 @@ data_file = sys.argv[2]
 bins = p.load(open(data_file,"r"))
 
 # header
-print("chr\tpos\tN\tX")
+print("chr\tpos\t\tN\tX")
 
 # For each bin, get the matrix and compute the DSS required data for each CpG
-for bin_ in bins[:100]:
+for bin_ in bins:
 	matrix = bin_.matrix
 	positions = bin_.cpgPositions
 	if len(positions) != matrix.shape[1]:
@@ -54,7 +60,7 @@ for bin_ in bins[:100]:
 		col = matrix[:,coln]
 		x_methy_reads =  np.sum(col[col!=-1])
 		n_total_reads = np.count_nonzero(col!=-1)
-		line_data = "chr" + chr_number + "\t" + str(positions[i]) + "\t" + str(n_total_reads) + "\t" + str(x_methy_reads)
+		line_data = "chr" + chr_number + "\t" + str(int(positions[coln])) + "\t\t" + str(int(n_total_reads)) + "\t" + str(int(x_methy_reads))
 		print (line_data)
 
 
