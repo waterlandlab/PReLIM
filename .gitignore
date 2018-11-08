@@ -1,6 +1,7 @@
 # IDE junk
 .idea/
 __pycache__
+.vscode/
 
 # Unzipped model weights
 *.h5
