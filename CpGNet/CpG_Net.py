@@ -423,7 +423,9 @@ class CpGNet():
 		num_reads = encodings.shape[0]
 		#
 		# Now we normalize
+
 		encoded_vector_norm = normalize([encoded_vector], norm="l1")
+
 		return encoded_vector_norm[0], num_reads
 
 	# finds the majority class of the given column, discounting the current cpg
