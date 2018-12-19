@@ -51,7 +51,7 @@ from keras.layers import Dense, Activation, Dropout
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
-# warnings suck, turn thme off
+# warnings suck, turn them off
 if sys.version_info[0] < 3:
 	warnings.simplefilter("ignore", DeprecationWarning)
 	with warnings.catch_warnings():
@@ -277,17 +277,11 @@ class CpGNet():
 
 	
 
-	# TODO: vectorize this computation?
-	# Imputes missing values in Bins
-	def impute(self, matrix):
-		"""
-		Inputs: 
-		1. matrix, a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
-		
-		Outputs: 
-		1. A 2d numpy array with predicted probabilities of methylation
 
-		"""
+
+
+	def _get_imputation_features(self,matrix):
+		# returns a vector of features needed for the imputation of this matrix
 		X = []
 
 		numReads = matrix.shape[0]
@@ -307,29 +301,34 @@ class CpGNet():
 				if observed_state != -1:
 					continue
 
-				# encoding is the matrix encoding vector
-				# encoding = self._encode_input_matrix(observed_matrix)[0]
-
-				# # record the relative differences in CpG positions
-				# rel_pos = []
-				# rel_pos.append((positions[0] - bin_start) / 100.0)  ## distance to left bin edge
-				# for pos in positions:
-				# 	rel_pos.append((pos - bin_start) / 100.0)
-				# rel_pos.append((bin_end - positions[-1] + 1) / 100.0)  ## distance to left bin edge
-
 				row_mean = row_means[i]
 				col_mean = column_means[j]
-				# j is the current index in the row
-				# M[] is the current row data
+				
 				row = np.copy(matrix[i])
 				row[j] = -1
-				# data = [j]  + list(encoding) + differences
-				#data = [row_mean] + [col_mean] + rel_pos + [row_mean] + [col_mean] + [j] + list(row)  # list(encoding)
+
 				data = [row_mean] + [col_mean] +  [i, j] + list(row) +  list(encoding)
 				X.append(data)
 
 		X = np.array(X)
+
+		return X
+
+	# Imputes missing values in Bins
+	def impute(self, matrix):
+		"""
+		Inputs: 
+		1. matrix, a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+		
+		Outputs: 
+		1. A 2d numpy array with predicted probabilities of methylation
+
+		"""
+
+		X = _get_imputation_features(matrix)
+
 		predictions = self.predict(X)
+
 		k = 0 # keep track of prediction index for missing states
 		predicted_matrix = np.copy(matrix)
 		for i in range(predicted_matrix.shape[0]):
@@ -339,6 +338,45 @@ class CpGNet():
 					k += 1
 
 		return predicted_matrix
+
+
+
+
+
+
+
+	def impute_many(self, matrices):
+		'''
+		Imputes a bunch of matrices at the same time to help speed up imputation time.
+
+		Inputs:
+		1. matrices: array-like (i.e. list), where each element is
+			a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+
+		Outputs:
+
+		1. A List of 2d numpy arrays with predicted probabilities of methylation for unknown values.
+		'''
+
+		# Extract all features for all matrices so we can predict in bulk, this is where the speedup comes from
+		X = np.array([_get_imputation_features(matrix) for matrix in matrices])
+		predictions = self.predict(X)
+
+
+		predicted_matrices = []
+
+
+		k = 0 # keep track of prediction index for missing states, order is crucial!
+		for matrix in matrices:
+			predicted_matrix = np.copy(matrix)
+			for i in range(predicted_matrix.shape[0]):
+				for j in range(predicted_matrix.shape[1]):
+					if predicted_matrix[i, j] == -1:
+						predicted_matrix[i, j] = predictions[k]
+						k += 1
+			predicted_matrices.append(predicted_matrix)
+
+		return predicted_matrices
 
 
 
@@ -427,24 +465,16 @@ class CpGNet():
 					Y.append(state)
 					
 					
-					# # record the relative differences in CpG positions
-					# rel_pos = []
-					# rel_pos.append((positions[0] - Bin.binStartInc)/100.0) ## distance to left bin edge
-					# for pos in positions:
-					#     rel_pos.append((pos - Bin.binStartInc)/100.0)
-					# rel_pos.append((Bin.binEndInc - positions[-1] + 1)/100.0) ## distance to left bin edge
-
-					#rel_pos = Bin.relative_positions
+					
 					row_mean = row_means[i]
 					col_mean = column_means[j]
 					# j is the current index in the row
-					# M[] is the current row data
+					
 					# encoding is the matrix encoding vector
 					# differences is the difference in positions of the cpgs
 					row = np.copy(observed_matrix[i])
 					row[j] = -1
 
-					#data = [row_mean] + [col_mean] + rel_pos +  [i, j] + list(row) +  list(encoding)
 					data = [row_mean] + [col_mean] +  [i, j] + list(row) +  list(encoding)
 					X.append(data)
 
