@@ -334,7 +334,10 @@ class CpGNet():
 
 		"""
 
-		X = _get_imputation_features(matrix)
+		X = self._get_imputation_features(matrix)
+		
+		if len(X) == 0: # nothing to impute
+			return matrix
 
 		predictions = self.predict(X)
 
@@ -369,7 +372,9 @@ class CpGNet():
 		'''
 
 		# Extract all features for all matrices so we can predict in bulk, this is where the speedup comes from
-		X = np.array([_get_imputation_features(matrix) for matrix in matrices])
+		
+		X = np.array([features for matrix_features in [self._get_imputation_features(matrix) for matrix in matrices] for features in matrix_features])
+		print("lenx:",len(X))
 		predictions = self.predict(X)
 
 
@@ -415,9 +420,7 @@ class CpGNet():
 		num_reads = encodings.shape[0]
 		#
 		# Now we normalize
-		print ("encoded vector:",encoded_vector)
 		encoded_vector_norm = normalize([encoded_vector], norm="l1")
-		print ("encoded vector normalized",encoded_vector_norm)
 		return encoded_vector_norm[0], num_reads
 
 	# finds the majority class of the given column, discounting the current cpg
