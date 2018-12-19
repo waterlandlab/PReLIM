@@ -9,7 +9,7 @@ Baylor College of Medicine
 
 April 2018
 
-CpG-Net imputes missing CpG methylation
+PRELIM imputes missing CpG methylation
 states in CpG matrices.
 
 """
@@ -136,12 +136,12 @@ class CpGNet():
 
 		# convert to bin objects for ease of use
 		for matrix in bin_matrices:
-			mybin = CpGBin(matrix=matrix)
-			bins.append(mybin)
+			mybin = CpGBin( matrix=matrix )
+			bins.append( mybin )
 		
 		# find bins with no missing data
 		complete_bins = _filter_missing_data( bins )
-		shuffle(complete_bins)
+		shuffle( complete_bins )
 		
 		# apply masks
 		masked_bins = _apply_masks( complete_bins, bins )
@@ -150,7 +150,7 @@ class CpGNet():
 		X, y = self._collectFeatures( masked_bins ) 
 
 		# Train the neural network model
-		self.fit(X, y, weight_file = weight_file)
+		self.fit( X, y, weight_file = weight_file )
 
 
 	def fit(self,
@@ -208,7 +208,7 @@ class CpGNet():
 					  metrics=['accuracy'])
 
 		earlystopper = EarlyStopping(patience=5, verbose=1)
-		checkpointer = ModelCheckpoint(weight_file, monitor='val_acc', verbose=1, save_best_only=True, mode="max")
+		checkpointer = ModelCheckpoint(weight_file, monitor='val_loss', verbose=1, save_best_only=True, mode="max")
 
 		# Displays the model's structure
 		print (self.model.summary())
@@ -281,7 +281,16 @@ class CpGNet():
 
 
 	def _get_imputation_features(self,matrix):
-		# returns a vector of features needed for the imputation of this matrix
+		'''
+		Returns a vector of features needed for the imputation of this matrix
+
+		Inputs: 
+		1. matrix, a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+
+		Outputs:
+		1. A feature vector for the matrix
+		'''
+
 		X = []
 
 		numReads = matrix.shape[0]
@@ -350,8 +359,9 @@ class CpGNet():
 		Imputes a bunch of matrices at the same time to help speed up imputation time.
 
 		Inputs:
+
 		1. matrices: array-like (i.e. list), where each element is
-			a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+		a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
 
 		Outputs:
 
@@ -365,6 +375,7 @@ class CpGNet():
 
 		predicted_matrices = []
 
+		# TODO: lots of for-loops here, could be sped up?
 
 		k = 0 # keep track of prediction index for missing states, order is crucial!
 		for matrix in matrices:
@@ -483,6 +494,10 @@ class CpGNet():
 		Y = np.array(Y)
 		Y.astype(int)
 		return X, Y
+
+
+
+# Helper functions
 
 # returns a list of bins similar to the input
 # but matrix rows with missing values are removed
