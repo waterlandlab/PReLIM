@@ -374,7 +374,10 @@ class CpGNet():
 		# Extract all features for all matrices so we can predict in bulk, this is where the speedup comes from
 		
 		X = np.array([features for matrix_features in [self._get_imputation_features(matrix) for matrix in matrices] for features in matrix_features])
-		print("lenx:",len(X))
+		
+		if len(X) == 0:
+			return matrices
+		
 		predictions = self.predict(X)
 
 
