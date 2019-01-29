@@ -23,6 +23,8 @@ try:
 	import cPickle as p
 except ImportError:
 	import pickle as p
+except ModuleNotFoundError:
+	import pickle as p
 
 #import matplotlib.pyplot as plt
 import warnings
