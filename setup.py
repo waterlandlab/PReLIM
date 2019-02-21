@@ -7,6 +7,6 @@ setup(name="CpGNet",
       author_email="",
       license="",
       packages=['CpGNet'],
-      install_requires=['tensorflow', 'scikit-learn', 'keras', 'numpy', 'pandas', 'tqdm'],
+      install_requires=['scikit-learn', 'keras', 'numpy', 'pandas', 'tqdm'],
       include_package_data=True,
 )
