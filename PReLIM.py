@@ -143,7 +143,7 @@ class PReLIM():
 			If you don't want to save a file, set this to "no"
 		"""
 		# bin_matrices: a list of cpg matrices 
-		X,y = self.get_X_y(bin_matrices, model_file=model_file, verbose=False)
+		X,y = self.get_X_y(bin_matrices, verbose=False)
 		
 		# Train the neural network model
 		self.fit(X,y, model_file=model_file, verbose=verbose)
@@ -209,7 +209,7 @@ class PReLIM():
 
 
 	# Feature collection directly from bins
-	def get_X_y(self, bin_matrices, model_file=None, verbose=False):
+	def get_X_y(self, bin_matrices, verbose=False):
 		bins = []
 
 		# convert to bin objects for ease of use
