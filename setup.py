@@ -1,12 +1,12 @@
 from setuptools import setup
 
-setup(name="CpGNet",
-      version="0.1.1",
+setup(name="PReLIM",
+      version="0.2",
       description="",
-      author="",
+      author="Jack Duryea",
       author_email="",
-      license="",
-      packages=['CpGNet'],
-      install_requires=['scikit-learn', 'keras', 'numpy', 'pandas', 'tqdm'],
+      license="MIT",
+      packages=['prelim'],
+      install_requires=['scikit-learn', 'numpy', 'pandas', 'tqdm'],
       include_package_data=True,
 )
