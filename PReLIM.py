@@ -257,7 +257,7 @@ class PReLIM():
 		y_pred = CpGNet.predict(X)  
 
 		"""
-		return self.model.predict_proba(X)
+		return self.model.predict_proba(X)[:,1]
 
 
 	def predict_proba(self, X):
@@ -272,7 +272,7 @@ class PReLIM():
 		y_pred = CpGNet.predict(X)  
 
 		"""
-		return self.model.predict_proba(X)
+		return self.model.predict_proba(X)[:1]
 
 
 	# Load a saved model
