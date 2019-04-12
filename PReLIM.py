@@ -7,9 +7,14 @@ Waterland Lab
 Computational Epigenetics Section
 Baylor College of Medicine
 
-April 2018
+Created April 2018
 
-PRELIM imputes missing CpG methylation
+Updated April 11 2019: use random forests as model
+
+
+PReLIM: Preceise Read Level Imputation of Methylation
+
+PReLIM imputes missing CpG methylation
 states in CpG matrices.
 
 """
@@ -18,12 +23,6 @@ states in CpG matrices.
 from scipy import stats
 import pandas as pd
 import numpy as np
-
-try:
-	import cPickle as p
-except ModuleNotFoundError:
-	import pickle as p
-
 import matplotlib.pyplot as plt
 import warnings
 import math
@@ -34,21 +33,22 @@ from tqdm import tqdm
 import copy
 import time
 from random import shuffle
+
 from collections import defaultdict
 import random
+
 # sklearn imports
 from sklearn.preprocessing import normalize
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, auc
-from sklearn import preprocessing
-from sklearn.preprocessing import PolynomialFeatures
-from keras.layers.advanced_activations import LeakyReLU
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
 
-# keras imports
-import keras
-from keras.models import Sequential, load_model
-from keras.layers import Dense, Activation, Dropout
-from keras.callbacks import EarlyStopping, ModelCheckpoint
+# Pickle
+try:
+	import cPickle as p
+except ModuleNotFoundError:
+	import pickle as p
 
 
 # warnings suck, turn them off
@@ -118,7 +118,7 @@ class CpGBin():
 
 
 
-class CpGNet():
+class PReLIM():
 	def __init__(self, cpgDensity=2):
 		self.model = None
 		self.cpgDensity = cpgDensity
@@ -130,8 +130,9 @@ class CpGNet():
 		self.unknown = -1
 
 
-	def train(self, bin_matrices, weight_file="CpGNetWeights.h5"):
-		# bin_matrices: a list of cpg matrices 
+
+	# Feature collection directly from bins
+	def get_X_y(self, bin_matrices, model_file=None, verbose=False, return_X_y=False):
 		bins = []
 
 		# convert to bin objects for ease of use
@@ -148,81 +149,66 @@ class CpGNet():
 
 		# extract features
 		X, y = self._collectFeatures( masked_bins ) 
+		return X, y 
 
+	# Train a model
+	def train(self, bin_matrices, model_file=None, verbose=False, return_X_y=False):
+		# bin_matrices: a list of cpg matrices 
+		X,y = self.get_X_y(bin_matrices, model_file=model_file, verbose=False, return_X_y=False)
+		
 		# Train the neural network model
-		self.fit( X, y, weight_file = weight_file )
+		self.fit(X,y)
+		
+
 
 
 	def fit(self,
 			X_train,
 			y_train,
-			epochs=10,
-			batch_size=32,
-			val_split=0.2,
-			weight_file="CpGNetWeights.h5"
+			n_estimators = [10, 50, 100, 500, 1000],
+			cores = -1,
+			max_depths = [1, 5, 10, 20, 30],
+			model_file=None,
+			verbose=False
 			):
 		"""
 		Inputs: 
 		1. X_train,     numpy array, Contains feature vectors.
 		2. y_train,     numpy array, Contains labels for training data.
-		3. epochs,      integer,     Number of epochs to train for. Can be cut short if using early stopping.
-		4. batch_size,  integer,     Size of each training batch.
-		5. val_split,   float        Between 0 and 1, the proportion of X_train that is used for validation loss.
-		6. weight_file, string,      The name of the file to save the model weights to.
+		3. n_estimators, list, the number of estimators to try during a grid search.
+		4. max_depths, list, the maximum depths of trees to try during a grid search.
+		5. cores, the number of cores to use during training, helpful for grid search.
+		6. model_file, string,      The name of the file to save the model to. If None, then create a file name that includes a timestamp.
 	
+		5-fold validation is built into the grid search
+
 		Outputs: 
-		None, saves a weight file
+		The trained model
 
 		Usage: 
-		CpGNet.fit(X_train, y_train)	
-		
+		model.fit(X_train, y_train)	
 		"""
-		x_input_dim = X_train.shape[1]
-
-		self.model = Sequential()
-
-		# Hidden layers
-		self.model.add(Dense(1000, activation='linear',input_dim=x_input_dim))
-		self.model.add(LeakyReLU(alpha=.0001))
-		#self.model.add(Dropout(0.5))
-
-		self.model.add(Dense(800, activation='linear',input_dim=x_input_dim))
-		self.model.add(LeakyReLU(alpha=.0001))
-		self.model.add(Dropout(0.5))
-
-		self.model.add(Dense(500, activation='linear'))
-		self.model.add(LeakyReLU(alpha=.0001))
-		self.model.add(Dropout(0.5))
-
-		self.model.add(Dense(100, activation='linear'))
-		self.model.add(LeakyReLU(alpha=.0001))
-		#self.model.add(Dropout(0.5))
-
-		# Output layer predicts methylation status of a single CpG
-		self.model.add(Dense(1, activation='sigmoid'))
-
-		adam = keras.optimizers.Adam(lr=0.00001)
-
-		self.model.compile(optimizer=adam,
-					  loss='binary_crossentropy',
-					  metrics=['accuracy'])
-
-		earlystopper = EarlyStopping(patience=5, verbose=1)
-		checkpointer = ModelCheckpoint(weight_file, monitor='val_loss', verbose=1, save_best_only=True, mode="max")
-
-		# Displays the model's structure
-		print (self.model.summary())
 
 
-		return self.model.fit(X_train, y_train, 
-			epochs=epochs, 
-			batch_size=batch_size, 
-			callbacks=[earlystopper, checkpointer], 
-			validation_split=val_split, 
-			verbose=True, 
-			shuffle=True)
+		grid_param = {  
+		 "n_estimators": n_estimators,
+		  "max_depth": max_depths,
+		}
+
+		# Note: let the grid search use a lot of cores, but only use 1 for each forest
+		# since dispatching can take a lot of time
+		rf = RandomForestClassifier(n_jobs=1)
+		self.model = GridSearchCV(rf, grid_param, n_jobs=cores, cv=5, verbose=verbose)
+		self.model.fit(X_train, y_train)
 
 
+		# save the model
+		if not model_file:
+			model_file = "PReLIM_model" + str(time.time())
+
+		p.dump(self.model, open(model_file,"wb"))
+
+		return self.model
 
 
 
@@ -243,7 +229,7 @@ class CpGNet():
 		y_pred = CpGNet.predict_classes(X)  
 
 		"""
-		return self.model.predict_classes(X)
+		return self.model.predict(X)
 	
 	# Return a vector of probabilities for methylation
 	def predict(self, X):
@@ -258,14 +244,29 @@ class CpGNet():
 		y_pred = CpGNet.predict(X)  
 
 		"""
-		return self.model.predict(X)
+		return self.model.predict_proba(X)
+
+
+	def predict_proba(self, X):
+		"""
+		Inputs: 
+		1. X, numpy array, contains feature vectors
+		
+		Outputs: 
+		1. 1-d numpy array of class predictions 
+
+		Usage: 
+		y_pred = CpGNet.predict(X)  
+
+		"""
+		return self.model.predict_proba(X)
 
 
 	# Load a saved model
-	def loadWeights(self, weight_file):
+	def loadWeights(self, model_file):
 		"""
 		Inputs:
-		1. weight_file, string, name of file with saved model weights
+		1. model_file, string, name of file with a saved model
 
 		Outputs:
 		None
@@ -273,7 +274,7 @@ class CpGNet():
 		Effects:
 		self.model is loaded with the provided weights
 		"""
-		self.model = load_model(weight_file)
+		self.model = p.load(open(model_file,"rb"))
 
 	
 
