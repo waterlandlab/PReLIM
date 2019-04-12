@@ -178,7 +178,9 @@ class PReLIM():
 		3. n_estimators, list, the number of estimators to try during a grid search.
 		4. max_depths, list, the maximum depths of trees to try during a grid search.
 		5. cores, the number of cores to use during training, helpful for grid search.
-		6. model_file, string,      The name of the file to save the model to. If None, then create a file name that includes a timestamp.
+		6. model_file, string,      The name of the file to save the model to. 
+			If None, then create a file name that includes a timestamp.
+			If you don't want to save a file, set this to "no"
 	
 		5-fold validation is built into the grid search
 
@@ -203,6 +205,10 @@ class PReLIM():
 
 
 		# save the model
+
+		if model_file == "no":
+			return self.model
+
 		if not model_file:
 			model_file = "PReLIM_model" + str(time.time())
 
