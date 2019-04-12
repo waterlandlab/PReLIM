@@ -131,30 +131,19 @@ class PReLIM():
 
 
 
-	# Feature collection directly from bins
-	def get_X_y(self, bin_matrices, model_file=None, verbose=False, return_X_y=False):
-		bins = []
 
-		# convert to bin objects for ease of use
-		for matrix in bin_matrices:
-			mybin = CpGBin( matrix=matrix )
-			bins.append( mybin )
-		
-		# find bins with no missing data
-		complete_bins = _filter_missing_data( bins )
-		shuffle( complete_bins )
-		
-		# apply masks
-		masked_bins = _apply_masks( complete_bins, bins )
-
-		# extract features
-		X, y = self._collectFeatures( masked_bins ) 
-		return X, y 
 
 	# Train a model
-	def train(self, bin_matrices, model_file=None, verbose=False, return_X_y=False):
+	def train(self, bin_matrices, model_file="no", verbose=False):
+		"""
+		bin_matrices: list of cpg matrices
+
+		model_file, string,      The name of the file to save the model to. 
+			If None, then create a file name that includes a timestamp.
+			If you don't want to save a file, set this to "no"
+		"""
 		# bin_matrices: a list of cpg matrices 
-		X,y = self.get_X_y(bin_matrices, model_file=model_file, verbose=False, return_X_y=False)
+		X,y = self.get_X_y(bin_matrices, model_file=model_file, verbose=False)
 		
 		# Train the neural network model
 		self.fit(X,y)
@@ -219,7 +208,25 @@ class PReLIM():
 
 
 
+	# Feature collection directly from bins
+	def get_X_y(self, bin_matrices, model_file=None, verbose=False):
+		bins = []
 
+		# convert to bin objects for ease of use
+		for matrix in bin_matrices:
+			mybin = CpGBin( matrix=matrix )
+			bins.append( mybin )
+		
+		# find bins with no missing data
+		complete_bins = _filter_missing_data( bins )
+		shuffle( complete_bins )
+		
+		# apply masks
+		masked_bins = _apply_masks( complete_bins, bins )
+
+		# extract features
+		X, y = self._collectFeatures( masked_bins ) 
+		return X, y 
 
 
 	# Return a vector of predicted classes 
