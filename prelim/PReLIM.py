@@ -20,14 +20,8 @@ states in CpG matrices.
 """
 
 # standard imports
-from scipy import stats
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import warnings
-import math
 import numpy as np
-import os
 import sys
 from tqdm import tqdm
 import copy
@@ -39,8 +33,6 @@ import random
 
 # sklearn imports
 from sklearn.preprocessing import normalize
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 
