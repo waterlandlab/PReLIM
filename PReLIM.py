@@ -120,6 +120,10 @@ class CpGBin():
 
 class PReLIM():
 	def __init__(self, cpgDensity=2):
+		"""
+        :param cpgDensity: the density of the bins that will be used 
+        """
+
 		self.model = None
 		self.cpgDensity = cpgDensity
 		self.METHYLATED = 1
@@ -136,14 +140,14 @@ class PReLIM():
 	# Train a model
 	def train(self, bin_matrices, model_file="no", verbose=False):
 		"""
-		bin_matrices: list of cpg matrices
+        :param bin_matrices: list of cpg matrices
+        :param model_file: The name of the file to save the model to. If None, then create a file name that includes a timestamp. If you don't want to save a file, set this to "no"
+        :param verbose: prints more info if true
+        """
 
-		model_file, string,      The name of the file to save the model to. 
-			If None, then create a file name that includes a timestamp.
-			If you don't want to save a file, set this to "no"
-		"""
+
 		# bin_matrices: a list of cpg matrices 
-		X,y = self.get_X_y(bin_matrices, verbose=False)
+		X,y = self.get_X_y(bin_matrices, verbose=verbose)
 		
 		# Train the neural network model
 		self.fit(X,y, model_file=model_file, verbose=verbose)
@@ -160,25 +164,27 @@ class PReLIM():
 			model_file=None,
 			verbose=False
 			):
-		"""
-		Inputs: 
-		1. X_train,     numpy array, Contains feature vectors.
-		2. y_train,     numpy array, Contains labels for training data.
-		3. n_estimators, list, the number of estimators to try during a grid search.
-		4. max_depths, list, the maximum depths of trees to try during a grid search.
-		5. cores, the number of cores to use during training, helpful for grid search.
-		6. model_file, string,      The name of the file to save the model to. 
-			If None, then create a file name that includes a timestamp.
-			If you don't want to save a file, set this to "no"
-	
-		5-fold validation is built into the grid search
 
-		Outputs: 
-		The trained model
+		"""
+		Train a random forest model using grid search on a feature matrix (X) and class labels (y)
 
 		Usage: 
 		model.fit(X_train, y_train)	
-		"""
+
+        :param X_train: numpy array, Contains feature vectors.
+        :param y_train: numpy array, Contains labels for training data.
+        :param n_estimators: list, the number of estimators to try during a grid search.
+        :param max_depths: list, the maximum depths of trees to try during a grid search.
+        :param cores: integer, the number of cores to use during training, helpful for grid search.
+        :param model_file:  string,The name of the file to save the model to. 
+			If None, then create a file name that includes a timestamp.
+			If you don't want to save a file, set this to "no"
+
+        :return: The trained sklearn model
+        """
+
+
+		
 
 
 		grid_param = {  
@@ -189,7 +195,7 @@ class PReLIM():
 		# Note: let the grid search use a lot of cores, but only use 1 for each forest
 		# since dispatching can take a lot of time
 		rf = RandomForestClassifier(n_jobs=1)
-		self.model = GridSearchCV(rf, grid_param, n_jobs=cores, cv=5, verbose=verbose)
+		self.model = GridSearchCV(rf, grid_param, n_jobs=2, cv=5, verbose=verbose)
 		self.model.fit(X_train, y_train)
 
 
@@ -210,6 +216,11 @@ class PReLIM():
 
 	# Feature collection directly from bins
 	def get_X_y(self, bin_matrices, verbose=False):
+		"""
+        :param bin_matrices: list of CpG matrices
+        :param verbose: prints more info if true
+        :return: feature matrix (X) and class labels (y)
+        """
 		bins = []
 
 		# convert to bin objects for ease of use
@@ -232,60 +243,55 @@ class PReLIM():
 	# Return a vector of predicted classes 
 	def predict_classes(self, X):
 		"""
-		Inputs: 
-		1. X, numpy array, contains feature vectors
+		Predict the classes of the samples in the given feature matrix
 		
-		Outputs: 
-		1. 1-d numpy array of prediction values
-
-		Usage: 
+		Usage:
 		y_pred = CpGNet.predict_classes(X)  
+        
+        :param X: numpy array, contains feature vectors
+        :param verbose: prints more info if true
+        :return: 1-d numpy array of predicted classes
+        """
 
-		"""
+
 		return self.model.predict(X)
 	
 	# Return a vector of probabilities for methylation
 	def predict(self, X):
 		"""
-		Inputs: 
-		1. X, numpy array, contains feature vectors
+		Predict the probability of methylation for each sample in the given feature matrix
 		
-		Outputs: 
-		1. 1-d numpy array of predicted class labels
-
-		Usage: 
+		Usage:
 		y_pred = CpGNet.predict(X)  
-
-		"""
+        
+        :param X: numpy array, contains feature vectors
+        :param verbose: prints more info if true
+        :return: 1-d numpy array of prediction values
+        """
 		return self.model.predict_proba(X)[:,1]
 
 
 	def predict_proba(self, X):
 		"""
-		Inputs: 
-		1. X, numpy array, contains feature vectors
+		Predict the classes of the samples in the given feature matrix
+		Same as predict, just a convenience to have in case of differen styles
 		
-		Outputs: 
-		1. 1-d numpy array of class predictions 
-
-		Usage: 
-		y_pred = CpGNet.predict(X)  
-
-		"""
+		Usage:
+		y_pred = CpGNet.predict_classes(X)  
+        
+        :param X: numpy array, contains feature vectors
+        :param verbose: prints more info if true
+        :return: 1-d numpy array of predicted classes
+        """
 		return self.model.predict_proba(X)[:1]
 
 
 	# Load a saved model
 	def loadWeights(self, model_file):
 		"""
-		Inputs:
-		1. model_file, string, name of file with a saved model
-
-		Outputs:
-		None
-
-		Effects:
 		self.model is loaded with the provided weights
+
+		:param model_file: string, name of file with a saved model
 		"""
 		self.model = p.load(open(model_file,"rb"))
 
@@ -293,16 +299,16 @@ class PReLIM():
 
 
 
-
+	# get a feature matrix for the given cpg matrix
 	def _get_imputation_features(self,matrix):
 		'''
 		Returns a vector of features needed for the imputation of this matrix
+		Each sample is an individual CpG, and the features are
+		the row mean, the column mean, the position of the cpg in the matrix,
+		the row, and the relative proportions of each methylation pattern 
 
-		Inputs: 
-		1. matrix, a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
-
-		Outputs:
-		1. A feature vector for the matrix
+		:param matrix: a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+        :return: A feature vector for the matrix
 		'''
 
 		X = []
@@ -340,12 +346,11 @@ class PReLIM():
 	# Imputes missing values in Bins
 	def impute(self, matrix):
 		"""
-		Inputs: 
-		1. matrix, a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
-		
-		Outputs: 
-		1. A 2d numpy array with predicted probabilities of methylation
+		Impute the missing values in a CpG matrix. Values are filled with the 
+		predicted probability of methylation.
 
+		:param matrix: a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+        :return: A 2d numpy array with predicted probabilities of methylation
 		"""
 
 		X = self._get_imputation_features(matrix)
@@ -370,22 +375,15 @@ class PReLIM():
 
 
 
-
+	# Extract all features for all matrices so we can predict in bulk, this is where the speedup comes from
 	def impute_many(self, matrices):
 		'''
 		Imputes a bunch of matrices at the same time to help speed up imputation time.
-
-		Inputs:
-
-		1. matrices: array-like (i.e. list), where each element is
-		a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
-
-		Outputs:
-
-		1. A List of 2d numpy arrays with predicted probabilities of methylation for unknown values.
+	
+		:param matrices: array-like (i.e. list), where each element is a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+        :return: A List of 2d numpy arrays with predicted probabilities of methylation for unknown values.
 		'''
 
-		# Extract all features for all matrices so we can predict in bulk, this is where the speedup comes from
 		
 		X = np.array([features for matrix_features in [self._get_imputation_features(matrix) for matrix in matrices] for features in matrix_features])
 		
@@ -397,7 +395,7 @@ class PReLIM():
 
 		predicted_matrices = []
 
-		# TODO: lots of for-loops here, could be sped up?
+		# lots of for-loops here, could be sped up?
 
 		k = 0 # keep track of prediction index for missing states, order is crucial!
 		for matrix in matrices:
@@ -421,33 +419,48 @@ class PReLIM():
 
 	# Returns a matrix encoding of a CpG matrix
 	def _encode_input_matrix(self, m):
+		"""
+		:param m: a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+        :return: list of relative proportions of each type of methylation pattern, number of reads
+		"""
 		matrix = np.copy(m)
 		n_cpgs = matrix.shape[1]
 		matrix += 1  # deal with -1s
 		base_3_vec = np.power(3, np.arange(n_cpgs - 1, -1, -1))
-		#
+		
 		encodings = np.dot(base_3_vec, matrix.T)
-		#
+		
 		encoded_vector_dim = np.power(3, n_cpgs)
 		encoded_vector = np.zeros(encoded_vector_dim)
-		#
+		
 		for x in encodings:
 			encoded_vector[int(x)] += 1
-		#
+		
 		num_reads = encodings.shape[0]
-		#
+		
 		# Now we normalize
 		encoded_vector_norm = normalize([encoded_vector], norm="l1")
 		return encoded_vector_norm[0], num_reads
 
 	# finds the majority class of the given column, discounting the current cpg
-	
 	def _get_column_mean(self, matrix, col_i, current_cpg_state):
+		"""
+		:param matrix: a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+		:param col_i: integer, the column index
+		:param current_cpg_state: the cpg to discount
+        :return: the mean value of column col_i, discounting current_cpg_state
+		"""
 		sub = matrix[:, col_i]
 		return self._get_mean(sub, current_cpg_state)
 
 	# finds the majority class of the given read, discounting the current cpg
 	def _get_read_mean(self, matrix, read_i, current_cpg_state):
+		"""
+		:param matrix: a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+		:param read_i: integer, the row index
+		:param current_cpg_state: the cpg to discount
+        :return: the mean value of row read_i, discounting current_cpg_state
+		"""
 		sub = matrix[read_i, :]
 		return self._get_mean(sub, current_cpg_state)
 
@@ -469,6 +482,13 @@ class PReLIM():
 	# Returns X, y
 	# note: y can contain the labels 1,0, -1
 	def _collectFeatures(self, bins):
+		"""
+		Given a list of cpg bins, collect features for each artificially masked CpG
+		and record the hidden value as the class label.
+
+		:param matrix: bins: list of CpG bins that contain CpG matrices
+        :return: feature matrix X and class labels y
+		"""
 		X = []
 		Y = []
 		for Bin in tqdm(bins):
@@ -517,11 +537,18 @@ class PReLIM():
 
 
 
-# Helper functions
+#### Helper functions ####
 
-# returns a list of bins similar to the input
+# Returns a list of bins similar to the input
 # but matrix rows with missing values are removed
 def _filter_bad_reads(bins):
+	"""
+	Given a list of cpg bins, remove reads with missing values
+	so we can mask them.
+	
+	:param matrix: bins: list of CpG bins that contain CpG matrices
+    :return: bins, but all reads wiht missing values have been removed
+	"""
 	filtered_bins = []
 	for Bin in bins:
 		newBin = copy.deepcopy(Bin)
@@ -536,11 +563,17 @@ def _filter_bad_reads(bins):
 
 	return filtered_bins
 
-# returns a mapping of dimensions to list of masks that can be used on data
-# of that size.
-# the missing pattern is in matrix form.
+# Returns a mapping of dimensions to list of masks that can be used on data
+# of that size. the missing pattern is in matrix form.
 # -1 is missing, 2 is known
 def _extract_masks( bins):
+	"""
+	Given a list of cpg bins, return a list matrices that
+	represent the patterns of missing values, or "masks"
+	
+	:param matrix: bins: list of CpG bins that contain CpG matrices
+    :return: list of matrices that represent the patterns of missing values
+	"""
 	masks = defaultdict(lambda: [])
 	for Bin in tqdm(bins):
 		matrix = np.copy(Bin.matrix)
@@ -553,9 +586,16 @@ def _extract_masks( bins):
 
 	return masks
 
-  
+# Extract masks from original matrices and apply them to the complete matrices
 def _apply_masks( filtered_bins, all_bins ):
+	"""
+	Given a list of filtered cpg bins and a list of all the bins,
+	extract masks from the original bins and apply them to the filtered bins.
 	
+	:param filtered_bins: bins with no reads with missing values.
+	:param all_bins: list of CpG bins that contain CpG matrices
+	:return: list of matrices that represent the patterns of missing values
+	"""
 	masks = _extract_masks( all_bins )
 	ready_bins = []
 
@@ -571,8 +611,17 @@ def _apply_masks( filtered_bins, all_bins ):
 
 	return ready_bins
 
-# get a set of bins with no missing data
+# Get a list of bins with no missing data
 def _filter_missing_data( bins, min_read_depth=1 ):
+	"""
+	Given a list of filtered cpg bins and a list of all the bins,
+	extract masks from the original bins and apply them to the filtered bins.
+	
+	:param bins: list of CpG bins that contain CpG matrices
+	:param min_read_depth: minimum number of reads needed for a bin to be complete.
+	:return: remove reads with missing values from bins
+
+	"""
 	cpg_bins_complete = _filter_bad_reads(bins)
 	# secondary depth filter
 	cpg_bins_complete_depth = [bin_ for bin_ in cpg_bins_complete if bin_.matrix.shape[0] >= min_read_depth]
