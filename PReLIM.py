@@ -7,11 +7,6 @@ Waterland Lab
 Computational Epigenetics Section
 Baylor College of Medicine
 
-Created April 2018
-
-Updated April 11 2019: use random forests as model
-
-
 PReLIM: Preceise Read Level Imputation of Methylation
 
 PReLIM imputes missing CpG methylation
@@ -21,19 +16,14 @@ states in CpG matrices.
 
 # standard imports
 from scipy import stats
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import warnings
-import math
 import numpy as np
-import os
 import sys
 from tqdm import tqdm
 import copy
 import time
 from random import shuffle
-
 from collections import defaultdict
 import random
 
@@ -145,8 +135,6 @@ class PReLIM():
         :param verbose: prints more info if true
         """
 
-
-		# bin_matrices: a list of cpg matrices 
 		X,y = self.get_X_y(bin_matrices, verbose=verbose)
 		
 		# Train the neural network model
@@ -183,10 +171,6 @@ class PReLIM():
         :return: The trained sklearn model
         """
 
-
-		
-
-
 		grid_param = {  
 		 "n_estimators": n_estimators,
 		  "max_depth": max_depths,
@@ -200,7 +184,6 @@ class PReLIM():
 
 
 		# save the model
-
 		if model_file == "no":
 			return self.model
 
@@ -221,6 +204,7 @@ class PReLIM():
         :param verbose: prints more info if true
         :return: feature matrix (X) and class labels (y)
         """
+
 		bins = []
 
 		# convert to bin objects for ease of use
@@ -253,7 +237,6 @@ class PReLIM():
         :return: 1-d numpy array of predicted classes
         """
 
-
 		return self.model.predict(X)
 	
 	# Return a vector of probabilities for methylation
@@ -268,6 +251,7 @@ class PReLIM():
         :param verbose: prints more info if true
         :return: 1-d numpy array of prediction values
         """
+
 		return self.model.predict_proba(X)[:,1]
 
 
@@ -283,6 +267,7 @@ class PReLIM():
         :param verbose: prints more info if true
         :return: 1-d numpy array of predicted classes
         """
+
 		return self.model.predict_proba(X)[:1]
 
 
@@ -293,55 +278,13 @@ class PReLIM():
 
 		:param model_file: string, name of file with a saved model
 		"""
+
 		self.model = p.load(open(model_file,"rb"))
 
 	
 
 
-
-	# get a feature matrix for the given cpg matrix
-	def _get_imputation_features(self,matrix):
-		'''
-		Returns a vector of features needed for the imputation of this matrix
-		Each sample is an individual CpG, and the features are
-		the row mean, the column mean, the position of the cpg in the matrix,
-		the row, and the relative proportions of each methylation pattern 
-
-		:param matrix: a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
-        :return: A feature vector for the matrix
-		'''
-
-		X = []
-
-		numReads = matrix.shape[0]
-		density = matrix.shape[1]
-
-		nan_copy = np.copy(matrix)
-		nan_copy[nan_copy == -1] = np.nan
-		column_means = np.nanmean(nan_copy, axis=0)
-		row_means = np.nanmean(nan_copy, axis=1)
-		
-		encoding = self._encode_input_matrix(matrix)[0]
-
-		for i in range(numReads):
-			for j in range(density):
-				observed_state = matrix[i, j]
-				
-				if observed_state != -1:
-					continue
-
-				row_mean = row_means[i]
-				col_mean = column_means[j]
-				
-				row = np.copy(matrix[i])
-				row[j] = -1
-
-				data = [row_mean] + [col_mean] +  [i, j] + list(row) +  list(encoding)
-				X.append(data)
-
-		X = np.array(X)
-
-		return X
+	
 
 	# Imputes missing values in Bins
 	def impute(self, matrix):
@@ -383,7 +326,6 @@ class PReLIM():
 		:param matrices: array-like (i.e. list), where each element is a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
         :return: A List of 2d numpy arrays with predicted probabilities of methylation for unknown values.
 		'''
-
 		
 		X = np.array([features for matrix_features in [self._get_imputation_features(matrix) for matrix in matrices] for features in matrix_features])
 		
@@ -395,7 +337,6 @@ class PReLIM():
 
 		predicted_matrices = []
 
-		# lots of for-loops here, could be sped up?
 
 		k = 0 # keep track of prediction index for missing states, order is crucial!
 		for matrix in matrices:
@@ -412,10 +353,59 @@ class PReLIM():
 
 
 
-
-
-
 	### Helper functions, for private use only ###
+
+	# get a feature matrix for the given cpg matrix
+	def _get_imputation_features(self,matrix):
+		'''
+		Returns a vector of features needed for the imputation of this matrix
+		Each sample is an individual CpG, and the features are
+		the row mean, the column mean, the position of the cpg in the matrix,
+		the row, and the relative proportions of each methylation pattern 
+
+		:param matrix: a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+        :return: A feature vector for the matrix
+		'''
+		
+		X = []
+
+		numReads = matrix.shape[0]
+		density = matrix.shape[1]
+
+		nan_copy = np.copy(matrix)
+		nan_copy[nan_copy == -1] = np.nan
+
+		# get the column and row means
+		column_means = np.nanmean(nan_copy, axis=0)
+		row_means = np.nanmean(nan_copy, axis=1)
+		
+		encoding = self._encode_input_matrix(matrix)[0]
+
+		# iterate over all values in the matrix
+		for i in range(numReads):
+			for j in range(density):
+				observed_state = matrix[i, j]
+				
+				# only record missing values 
+				if observed_state != -1:
+					continue
+
+				row_mean = row_means[i]
+				col_mean = column_means[j]
+				
+				row = np.copy(matrix[i])
+				row[j] = -1
+
+				# features for a single sample
+				data = [row_mean] + [col_mean] +  [i, j] + list(row) +  list(encoding)
+				
+				X.append(data)
+
+		# list to np array
+		X = np.array(X)
+
+		return X
+
 
 	# Returns a matrix encoding of a CpG matrix
 	def _encode_input_matrix(self, m):
@@ -464,7 +454,14 @@ class PReLIM():
 		sub = matrix[read_i, :]
 		return self._get_mean(sub, current_cpg_state)
 
+
+	# Return the mean of sub matrix, discounting the current cpg methylation state
 	def _get_mean(self, sub_matrix, current_cpg_state):
+		'''
+		:param sub_matrix: a list of individual cpgs
+		:param current_cpg_state: the cpg to discount
+		:return: the mean value of the list, discounting current_cpg_state
+		'''
 		num_methy = np.count_nonzero(sub_matrix == self.METHYLATED)
 		num_unmethy = np.count_nonzero(sub_matrix == self.UNMETHYLATED)
 
@@ -516,9 +513,10 @@ class PReLIM():
 					Y.append(state)
 					
 					
-					
+					# row and column means
 					row_mean = row_means[i]
 					col_mean = column_means[j]
+
 					# j is the current index in the row
 					
 					# encoding is the matrix encoding vector
@@ -527,6 +525,7 @@ class PReLIM():
 					row[j] = -1
 
 					data = [row_mean] + [col_mean] +  [i, j] + list(row) +  list(encoding)
+					
 					X.append(data)
 
 
