@@ -49,6 +49,28 @@ to be used directly, PReLIM will use this class internally.</p>
 <dt id="PReLIM.PReLIM">
 <em class="property">class </em><code class="descclassname">PReLIM.</code><code class="descname">PReLIM</code><span class="sig-paren">(</span><em>cpgDensity=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class for a PReLIM model.</p>
+<p>Example usage:</p>
+<p>from PReLIM import PReLIM</p>
+<p>import numpy as np</p>
+<p># Collect methylation matrices, 1 is methylated, 0 is unmethylated, -1 is unknown</p>
+<p># Each column is a cpg site, each row is a read</p>
+<p>bin1 = np.array([[1,0],[0,-1],[-1,1],[0,0]],dtype=float)</p>
+<p>bin2 = np.array([[1,0],[1,0],[-1,1],[0,0],[0,1],[1,1],[0,0]],dtype=float)</p>
+<p>bin3 = np.array([[-1,1],[0,-1],[-1,1],[0,0]],dtype=float)</p>
+<p>etc</p>
+<p>bin1000 = np.array([[1,-1],[0,1],[-1,1],[1,0]],dtype=float)</p>
+<p>bin1001 = np.array([[1,1],[0,0],[0,1],[1,1]],dtype=float)</p>
+<p>bin1002 = np.array([[1,1],[1,1],[0,1],[1,0]],dtype=float)</p>
+<p>bin1003 = np.array([[0,0],[1,0],[0,1],[1,1]],dtype=float)</p>
+<p># Collection of bins</p>
+<p>bins = [bin1, bin2, bin3, … bin1000, bin1001, bin1002, bin1003]</p>
+<p>model = PReLIM(cpgDensity=2)</p>
+<p># Options for training/saving model</p>
+<p>model.train(bins, model_file=”no”) # don’t want a model file, must use “no”</p>
+<p># Use model for imputation</p>
+<p>imputed_bin1 = model.impute(bin1)</p>
+<p># You can also use batch imputation to impute on many bins at once</p>
+<p>imputed_bins = model.impute_many(bins)</p>
 <dl class="method">
 <dt id="PReLIM.PReLIM.fit">
 <code class="descname">fit</code><span class="sig-paren">(</span><em>X_train, y_train, n_estimators=[10, 50, 100, 500, 1000], cores=-1, max_depths=[1, 5, 10, 20, 30], model_file=None, verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM.fit" title="Permalink to this definition">¶</a></dt>
@@ -134,7 +156,7 @@ predicted probability of methylation.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">param matrices:</th><td class="field-body">array-like (i.e. list), where each element is a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown</td>
+<tr class="field-odd field"><th class="field-name">param matrices:</th><td class="field-body">list of CpG matrices, where each matrix is a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown</td>
 </tr>
 </tbody>
 </table>
@@ -243,7 +265,7 @@ y_pred = CpGNet.predict_classes(X)</p>
 <dt id="PReLIM.PReLIM.train">
 <code class="descname">train</code><span class="sig-paren">(</span><em>bin_matrices</em>, <em>model_file='no'</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM.train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM.train" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
-<div>Train a model</div></blockquote>
+<div>Train a PReLIM model using cpg matrices.</div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />

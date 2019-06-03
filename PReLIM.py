@@ -115,13 +115,46 @@ class CpGBin():
 class PReLIM():
 	"""
 	Class for a PReLIM model. 
+
+	Example usage: \n
+	
+	from PReLIM import PReLIM \n
+	import numpy as np \n
+	
+	
+	# Collect methylation matrices, 1 is methylated, 0 is unmethylated, -1 is unknown \n
+	# Each column is a cpg site, each row is a read  \n
+	bin1 = np.array([[1,0],[0,-1],[-1,1],[0,0]],dtype=float)  \n
+	bin2 = np.array([[1,0],[1,0],[-1,1],[0,0],[0,1],[1,1],[0,0]],dtype=float)   \n
+	bin3 = np.array([[-1,1],[0,-1],[-1,1],[0,0]],dtype=float)   \n
+	etc\n
+	bin1000 = np.array([[1,-1],[0,1],[-1,1],[1,0]],dtype=float)   \n
+	bin1001 = np.array([[1,1],[0,0],[0,1],[1,1]],dtype=float)    \n
+	bin1002 = np.array([[1,1],[1,1],[0,1],[1,0]],dtype=float)   \n
+	bin1003 = np.array([[0,0],[1,0],[0,1],[1,1]],dtype=float)   \n
+
+	# Collection of bins \n
+	bins = [bin1, bin2, bin3, ... bin1000, bin1001, bin1002, bin1003] \n
+
+	model = PReLIM(cpgDensity=2) \n
+
+	# Options for training/saving model \n
+	model.train(bins, model_file="no") # don't want a model file, must use "no" \n
+
+	# Use model for imputation \n
+	imputed_bin1 = model.impute(bin1) \n
+
+	# You can also use batch imputation to impute on many bins at once \n
+	imputed_bins = model.impute_many(bins) \n\n\n
+	
+
 	"""
 	def __init__(self, cpgDensity=2):
 		"""
 		Constructor for a PReLIM model.
+
         :param cpgDensity: the density of the bins that will be used 
         """
-
 		self.model = None
 		self.cpgDensity = cpgDensity
 		self.METHYLATED = 1
@@ -138,8 +171,8 @@ class PReLIM():
 	# Train a model
 	def train(self, bin_matrices, model_file="no", verbose=False):
 		"""
-		Train a model
-		
+		Train a PReLIM model using cpg matrices.
+
         :param bin_matrices: list of cpg matrices
         :param model_file: The name of the file to save the model to. If None, then create a file name that includes a timestamp. If you don't want to save a file, set this to "no"
         :param verbose: prints more info if true
@@ -333,7 +366,7 @@ class PReLIM():
 		'''
 		Imputes a bunch of matrices at the same time to help speed up imputation time.
 	
-		:param matrices: array-like (i.e. list), where each element is a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
+		:param matrices: list of CpG matrices, where each matrix is a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown
         :return: A List of 2d numpy arrays with predicted probabilities of methylation for unknown values.
 		'''
 		

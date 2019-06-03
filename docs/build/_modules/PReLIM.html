@@ -149,13 +149,46 @@
 <div class="viewcode-block" id="PReLIM"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM">[docs]</a><span class="k">class</span> <span class="nc">PReLIM</span><span class="p">():</span>
 	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Class for a PReLIM model. </span>
+
+<span class="sd">	Example usage: \n</span>
+<span class="sd">	</span>
+<span class="sd">	from PReLIM import PReLIM \n</span>
+<span class="sd">	import numpy as np \n</span>
+<span class="sd">	</span>
+<span class="sd">	</span>
+<span class="sd">	# Collect methylation matrices, 1 is methylated, 0 is unmethylated, -1 is unknown \n</span>
+<span class="sd">	# Each column is a cpg site, each row is a read  \n</span>
+<span class="sd">	bin1 = np.array([[1,0],[0,-1],[-1,1],[0,0]],dtype=float)  \n</span>
+<span class="sd">	bin2 = np.array([[1,0],[1,0],[-1,1],[0,0],[0,1],[1,1],[0,0]],dtype=float)   \n</span>
+<span class="sd">	bin3 = np.array([[-1,1],[0,-1],[-1,1],[0,0]],dtype=float)   \n</span>
+<span class="sd">	etc\n</span>
+<span class="sd">	bin1000 = np.array([[1,-1],[0,1],[-1,1],[1,0]],dtype=float)   \n</span>
+<span class="sd">	bin1001 = np.array([[1,1],[0,0],[0,1],[1,1]],dtype=float)    \n</span>
+<span class="sd">	bin1002 = np.array([[1,1],[1,1],[0,1],[1,0]],dtype=float)   \n</span>
+<span class="sd">	bin1003 = np.array([[0,0],[1,0],[0,1],[1,1]],dtype=float)   \n</span>
+
+<span class="sd">	# Collection of bins \n</span>
+<span class="sd">	bins = [bin1, bin2, bin3, ... bin1000, bin1001, bin1002, bin1003] \n</span>
+
+<span class="sd">	model = PReLIM(cpgDensity=2) \n</span>
+
+<span class="sd">	# Options for training/saving model \n</span>
+<span class="sd">	model.train(bins, model_file=&quot;no&quot;) # don&#39;t want a model file, must use &quot;no&quot; \n</span>
+
+<span class="sd">	# Use model for imputation \n</span>
+<span class="sd">	imputed_bin1 = model.impute(bin1) \n</span>
+
+<span class="sd">	# You can also use batch imputation to impute on many bins at once \n</span>
+<span class="sd">	imputed_bins = model.impute_many(bins) \n\n\n</span>
+<span class="sd">	</span>
+
 <span class="sd">	&quot;&quot;&quot;</span>
 	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpgDensity</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Constructor for a PReLIM model.</span>
+
 <span class="sd">        :param cpgDensity: the density of the bins that will be used </span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
 		<span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">cpgDensity</span> <span class="o">=</span> <span class="n">cpgDensity</span>
 		<span class="bp">self</span><span class="o">.</span><span class="n">METHYLATED</span> <span class="o">=</span> <span class="mi">1</span>
@@ -172,8 +205,8 @@
 	<span class="c1"># Train a model</span>
 <div class="viewcode-block" id="PReLIM.train"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM.train">[docs]</a>	<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bin_matrices</span><span class="p">,</span> <span class="n">model_file</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">		Train a model</span>
-<span class="sd">		</span>
+<span class="sd">		Train a PReLIM model using cpg matrices.</span>
+
 <span class="sd">        :param bin_matrices: list of cpg matrices</span>
 <span class="sd">        :param model_file: The name of the file to save the model to. If None, then create a file name that includes a timestamp. If you don&#39;t want to save a file, set this to &quot;no&quot;</span>
 <span class="sd">        :param verbose: prints more info if true</span>
@@ -367,7 +400,7 @@
 		<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">		Imputes a bunch of matrices at the same time to help speed up imputation time.</span>
 <span class="sd">	</span>
-<span class="sd">		:param matrices: array-like (i.e. list), where each element is a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown</span>
+<span class="sd">		:param matrices: list of CpG matrices, where each matrix is a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown</span>
 <span class="sd">        :return: A List of 2d numpy arrays with predicted probabilities of methylation for unknown values.</span>
 <span class="sd">		&#39;&#39;&#39;</span>
 		
