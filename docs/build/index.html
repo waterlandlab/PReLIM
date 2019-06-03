@@ -1,0 +1,339 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome to PReLIM’s documentation! &#8212; PReLIM 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-prelim-s-documentation">
+<h1>Welcome to PReLIM’s documentation!<a class="headerlink" href="#welcome-to-prelim-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="module-PReLIM">
+<span id="main-api"></span><h1>Main API<a class="headerlink" href="#module-PReLIM" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="PReLIM.CpGBin">
+<em class="property">class </em><code class="descclassname">PReLIM.</code><code class="descname">CpGBin</code><span class="sig-paren">(</span><em>matrix</em>, <em>binStartInc=None</em>, <em>binEndInc=None</em>, <em>cpgPositions=None</em>, <em>sequence=''</em>, <em>encoding=None</em>, <em>missingToken=-1</em>, <em>chromosome=None</em>, <em>binSize=100</em>, <em>species='MM10'</em>, <em>verbose=True</em>, <em>tag1=None</em>, <em>tag2=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#CpGBin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.CpGBin" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class that contains information about a CpG Bin. Does not need 
+to be used directly, PReLIM will use this class internally.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="PReLIM.PReLIM">
+<em class="property">class </em><code class="descclassname">PReLIM.</code><code class="descname">PReLIM</code><span class="sig-paren">(</span><em>cpgDensity=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for a PReLIM model.</p>
+<dl class="method">
+<dt id="PReLIM.PReLIM.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X_train, y_train, n_estimators=[10, 50, 100, 500, 1000], cores=-1, max_depths=[1, 5, 10, 20, 30], model_file=None, verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM.fit" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Train a random forest model using grid search on a feature matrix (X) and class labels (y)</p>
+<p>Usage: 
+model.fit(X_train, y_train)</p>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X_train</strong> – numpy array, Contains feature vectors.</li>
+<li><strong>y_train</strong> – numpy array, Contains labels for training data.</li>
+<li><strong>n_estimators</strong> – list, the number of estimators to try during a grid search.</li>
+<li><strong>max_depths</strong> – list, the maximum depths of trees to try during a grid search.</li>
+<li><strong>cores</strong> – integer, the number of cores to use during training, helpful for grid search.</li>
+<li><strong>model_file</strong> – string,The name of the file to save the model to. 
+If None, then create a file name that includes a timestamp.
+If you don’t want to save a file, set this to “no”</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The trained sklearn model</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="PReLIM.PReLIM.get_X_y">
+<code class="descname">get_X_y</code><span class="sig-paren">(</span><em>bin_matrices</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM.get_X_y"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM.get_X_y" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bin_matrices</strong> – list of CpG matrices</li>
+<li><strong>verbose</strong> – prints more info if true</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">feature matrix (X) and class labels (y)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="PReLIM.PReLIM.impute">
+<code class="descname">impute</code><span class="sig-paren">(</span><em>matrix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM.impute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM.impute" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Impute the missing values in a CpG matrix. Values are filled with the 
+predicted probability of methylation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param matrix:</th><td class="field-body">a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A 2d numpy array with predicted probabilities of methylation</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="PReLIM.PReLIM.impute_many">
+<code class="descname">impute_many</code><span class="sig-paren">(</span><em>matrices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM.impute_many"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM.impute_many" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Imputes a bunch of matrices at the same time to help speed up imputation time.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">param matrices:</th><td class="field-body">array-like (i.e. list), where each element is a 2d np array, dtype=float, representing a CpG matrix, 1=methylated, 0=unmethylated, -1=unknown</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A List of 2d numpy arrays with predicted probabilities of methylation for unknown values.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="PReLIM.PReLIM.loadWeights">
+<code class="descname">loadWeights</code><span class="sig-paren">(</span><em>model_file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM.loadWeights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM.loadWeights" title="Permalink to this definition">¶</a></dt>
+<dd><p>self.model is loaded with the provided weights</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>model_file</strong> – string, name of file with a saved model</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="PReLIM.PReLIM.predict">
+<code class="descname">predict</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM.predict" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Predict the probability of methylation for each sample in the given feature matrix</p>
+<p>Usage:
+y_pred = CpGNet.predict(X)</p>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> – numpy array, contains feature vectors</li>
+<li><strong>verbose</strong> – prints more info if true</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">1-d numpy array of prediction values</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="PReLIM.PReLIM.predict_classes">
+<code class="descname">predict_classes</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM.predict_classes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM.predict_classes" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Predict the classes of the samples in the given feature matrix</p>
+<p>Usage:
+y_pred = CpGNet.predict_classes(X)</p>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> – numpy array, contains feature vectors</li>
+<li><strong>verbose</strong> – prints more info if true</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">1-d numpy array of predicted classes</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="PReLIM.PReLIM.predict_proba">
+<code class="descname">predict_proba</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM.predict_proba"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM.predict_proba" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Predict the classes of the samples in the given feature matrix
+Same as predict, just a convenience to have in case of differen styles</p>
+<p>Usage:
+y_pred = CpGNet.predict_classes(X)</p>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>X</strong> – numpy array, contains feature vectors</li>
+<li><strong>verbose</strong> – prints more info if true</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">1-d numpy array of predicted classes</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="PReLIM.PReLIM.train">
+<code class="descname">train</code><span class="sig-paren">(</span><em>bin_matrices</em>, <em>model_file='no'</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/PReLIM.html#PReLIM.train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#PReLIM.PReLIM.train" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Train a model</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>bin_matrices</strong> – list of cpg matrices</li>
+<li><strong>model_file</strong> – The name of the file to save the model to. If None, then create a file name that includes a timestamp. If you don’t want to save a file, set this to “no”</li>
+<li><strong>verbose</strong> – prints more info if true</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">PReLIM</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Jack Duryea.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

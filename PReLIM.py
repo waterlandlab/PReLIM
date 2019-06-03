@@ -51,25 +51,9 @@ if sys.version_info[0] < 3:
 
 # TODO: most of these fields are redundant in our application
 class CpGBin():
-	""" 
-	Constructor for a bin
-
-	Inputs:
-
-		matrix: numpy array, the bin's CpG matrix.
-		binStartInc: integer, the starting, inclusive, chromosomal index of the bin.
-		binEndInc: integer, the ending, inclusive, chromosomal index of the bin.
-		cpgPositions: array of integers, the chromosomal positions of the CpGs in the bin.
-		sequence: string, nucleotide sequence (A,C,G,T)
-		encoding: array, a reduced representation of the bin's CpG matrix
-		missingToken: integer, the token that represents missing data in the matrix.
-		chromosome: string, the chromosome this bin resides in.
-		binSize: integer, the number of base pairs this bin covers
-		species: string, the speices this bin belongs too.
-		verbose: boolean, print warnings, set to "false" for no error checking and faster speed
-
-		tag1: anything, for custom use.
-		tag2: anything, for custom use.
+	"""
+	A class that contains information about a CpG Bin. Does not need 
+	to be used directly, PReLIM will use this class internally.
 	"""
 	def __init__(self, 
 			matrix, 
@@ -86,6 +70,26 @@ class CpGBin():
 			verbose=True, 
 			tag1=None, 
 			tag2=None):
+		""" 
+		Constructor for a bin
+
+		Inputs:
+
+		matrix: numpy array, the bin's CpG matrix.
+		binStartInc: integer, the starting, inclusive, chromosomal index of the bin.
+		binEndInc: integer, the ending, inclusive, chromosomal index of the bin.
+		cpgPositions: array of integers, the chromosomal positions of the CpGs in the bin.
+		sequence: string, nucleotide sequence (A,C,G,T)
+		encoding: array, a reduced representation of the bin's CpG matrix
+		missingToken: integer, the token that represents missing data in the matrix.
+		chromosome: string, the chromosome this bin resides in.
+		binSize: integer, the number of base pairs this bin covers
+		species: string, the speices this bin belongs too.
+		verbose: boolean, print warnings, set to "false" for no error checking and faster speed
+
+		tag1: anything, for custom use.
+		tag2: anything, for custom use.
+		"""
 
 
 		self.cpgDensity = matrix.shape[1]
@@ -109,8 +113,12 @@ class CpGBin():
 
 
 class PReLIM():
+	"""
+	Class for a PReLIM model. 
+	"""
 	def __init__(self, cpgDensity=2):
 		"""
+		Constructor for a PReLIM model.
         :param cpgDensity: the density of the bins that will be used 
         """
 
@@ -130,6 +138,8 @@ class PReLIM():
 	# Train a model
 	def train(self, bin_matrices, model_file="no", verbose=False):
 		"""
+		Train a model
+		
         :param bin_matrices: list of cpg matrices
         :param model_file: The name of the file to save the model to. If None, then create a file name that includes a timestamp. If you don't want to save a file, set this to "no"
         :param verbose: prints more info if true
