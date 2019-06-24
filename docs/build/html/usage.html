@@ -88,7 +88,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">1. Getting Started</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">2. Using PReLIM</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#introduction">2.1. Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">2.1. Getting Started</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">3. Main API</a></li>
@@ -158,17 +158,35 @@
             
   <div class="section" id="using-prelim">
 <h1>2. Using PReLIM<a class="headerlink" href="#using-prelim" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="introduction">
-<h2>2.1. Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
-<p>After installing CluBCpG to your python environment there should not be a new set of command line tools on your PATH.
-They all begin with <code class="docutils literal notranslate"><span class="pre">clubcpg-</span></code>. Each one of them comes with a help command which displays the command line
-arguments each tool accepts.</p>
-<p>For example you can run</p>
-<blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>clubcpg-coverage --help
+<div class="section" id="getting-started">
+<h2>2.1. Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PReLIM</span> <span class="kn">import</span> <span class="n">PReLIM</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c1"># Note: This toy example does not contain enough data for the model</span>
+<span class="c1"># to actually make imputations due to train/validation splits. More bins must be used.</span>
+
+<span class="c1"># Step 1: Collect methylation matrices, 1 is methylated, 0 is unmethylated, -1 is unknown. Each column is a cpg site, each row is a read</span>
+<span class="n">bin1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]],</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+<span class="n">bin2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]],</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+<span class="n">bin3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]],</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+<span class="c1"># Put bins into a list</span>
+<span class="n">bins</span> <span class="o">=</span> <span class="p">[</span><span class="n">bin1</span><span class="p">,</span> <span class="n">bin2</span><span class="p">,</span> <span class="n">bin3</span><span class="p">]</span>
+
+<span class="c1"># Step 2: Created a model with correnct density for given bins</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">PReLIM</span><span class="p">(</span><span class="n">cpgDensity</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Step 3: Train the model and save it if you wish</span>
+<span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">bins</span><span class="p">,</span> <span class="n">model_file</span><span class="o">=</span><span class="s2">&quot;my_model_file&quot;</span><span class="p">)</span>
+
+<span class="c1"># Step 4: Use model for imputating a single bin, or...</span>
+<span class="n">imputed_bin1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">impute</span><span class="p">(</span><span class="n">bin1</span><span class="p">)</span>
+
+<span class="c1"># ... use batch imputation to impute many bins at once (recommended)</span>
+<span class="n">imputed_bins</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">impute_many</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span>
 </pre></div>
 </div>
-</div></blockquote>
 </div>
 </div>
 
