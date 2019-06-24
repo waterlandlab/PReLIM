@@ -82,8 +82,13 @@
               
             
             
-              <!-- Local TOC -->
-              <div class="local-toc"></div>
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intro.html">1. Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">2. Using PReLIM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">3. Main API</a></li>
+</ul>
+
             
           
         </div>
@@ -197,7 +202,7 @@
 
 
 <span class="c1"># TODO: most of these fields are redundant in our application</span>
-<div class="viewcode-block" id="CpGBin"><a class="viewcode-back" href="../index.html#PReLIM.CpGBin">[docs]</a><span class="k">class</span> <span class="nc">CpGBin</span><span class="p">():</span>
+<div class="viewcode-block" id="CpGBin"><a class="viewcode-back" href="../api.html#PReLIM.CpGBin">[docs]</a><span class="k">class</span> <span class="nc">CpGBin</span><span class="p">():</span>
 	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	A class that contains information about a CpG Bin. Does not need </span>
 <span class="sd">	to be used directly, PReLIM will use this class internally.</span>
@@ -259,7 +264,7 @@
 
 
 
-<div class="viewcode-block" id="PReLIM"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM">[docs]</a><span class="k">class</span> <span class="nc">PReLIM</span><span class="p">():</span>
+<div class="viewcode-block" id="PReLIM"><a class="viewcode-back" href="../api.html#PReLIM.PReLIM">[docs]</a><span class="k">class</span> <span class="nc">PReLIM</span><span class="p">():</span>
 	<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">	Class for a PReLIM model. </span>
 
@@ -316,7 +321,7 @@
 
 
 	<span class="c1"># Train a model</span>
-<div class="viewcode-block" id="PReLIM.train"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM.train">[docs]</a>	<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bin_matrices</span><span class="p">,</span> <span class="n">model_file</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="PReLIM.train"><a class="viewcode-back" href="../api.html#PReLIM.PReLIM.train">[docs]</a>	<span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bin_matrices</span><span class="p">,</span> <span class="n">model_file</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Train a PReLIM model using cpg matrices.</span>
 
@@ -333,7 +338,7 @@
 
 
 
-<div class="viewcode-block" id="PReLIM.fit"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM.fit">[docs]</a>	<span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+<div class="viewcode-block" id="PReLIM.fit"><a class="viewcode-back" href="../api.html#PReLIM.PReLIM.fit">[docs]</a>	<span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
 			<span class="n">X_train</span><span class="p">,</span>
 			<span class="n">y_train</span><span class="p">,</span>
 			<span class="n">n_estimators</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1000</span><span class="p">],</span>
@@ -388,7 +393,7 @@
 
 
 	<span class="c1"># Feature collection directly from bins</span>
-<div class="viewcode-block" id="PReLIM.get_X_y"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM.get_X_y">[docs]</a>	<span class="k">def</span> <span class="nf">get_X_y</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bin_matrices</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="PReLIM.get_X_y"><a class="viewcode-back" href="../api.html#PReLIM.PReLIM.get_X_y">[docs]</a>	<span class="k">def</span> <span class="nf">get_X_y</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bin_matrices</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param bin_matrices: list of CpG matrices</span>
 <span class="sd">        :param verbose: prints more info if true</span>
@@ -415,7 +420,7 @@
 
 
 	<span class="c1"># Return a vector of predicted classes </span>
-<div class="viewcode-block" id="PReLIM.predict_classes"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM.predict_classes">[docs]</a>	<span class="k">def</span> <span class="nf">predict_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+<div class="viewcode-block" id="PReLIM.predict_classes"><a class="viewcode-back" href="../api.html#PReLIM.PReLIM.predict_classes">[docs]</a>	<span class="k">def</span> <span class="nf">predict_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Predict the classes of the samples in the given feature matrix</span>
 <span class="sd">		</span>
@@ -430,7 +435,7 @@
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
 	
 	<span class="c1"># Return a vector of probabilities for methylation</span>
-<div class="viewcode-block" id="PReLIM.predict"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM.predict">[docs]</a>	<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+<div class="viewcode-block" id="PReLIM.predict"><a class="viewcode-back" href="../api.html#PReLIM.PReLIM.predict">[docs]</a>	<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Predict the probability of methylation for each sample in the given feature matrix</span>
 <span class="sd">		</span>
@@ -445,7 +450,7 @@
 		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)[:,</span><span class="mi">1</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="PReLIM.predict_proba"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM.predict_proba">[docs]</a>	<span class="k">def</span> <span class="nf">predict_proba</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+<div class="viewcode-block" id="PReLIM.predict_proba"><a class="viewcode-back" href="../api.html#PReLIM.PReLIM.predict_proba">[docs]</a>	<span class="k">def</span> <span class="nf">predict_proba</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Predict the classes of the samples in the given feature matrix</span>
 <span class="sd">		Same as predict, just a convenience to have in case of differen styles</span>
@@ -462,7 +467,7 @@
 
 
 	<span class="c1"># Load a saved model</span>
-<div class="viewcode-block" id="PReLIM.loadWeights"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM.loadWeights">[docs]</a>	<span class="k">def</span> <span class="nf">loadWeights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_file</span><span class="p">):</span>
+<div class="viewcode-block" id="PReLIM.loadWeights"><a class="viewcode-back" href="../api.html#PReLIM.PReLIM.loadWeights">[docs]</a>	<span class="k">def</span> <span class="nf">loadWeights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_file</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		self.model is loaded with the provided weights</span>
 
@@ -477,7 +482,7 @@
 	
 
 	<span class="c1"># Imputes missing values in Bins</span>
-<div class="viewcode-block" id="PReLIM.impute"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM.impute">[docs]</a>	<span class="k">def</span> <span class="nf">impute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">):</span>
+<div class="viewcode-block" id="PReLIM.impute"><a class="viewcode-back" href="../api.html#PReLIM.PReLIM.impute">[docs]</a>	<span class="k">def</span> <span class="nf">impute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">):</span>
 		<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">		Impute the missing values in a CpG matrix. Values are filled with the </span>
 <span class="sd">		predicted probability of methylation.</span>
@@ -509,7 +514,7 @@
 
 
 	<span class="c1"># Extract all features for all matrices so we can predict in bulk, this is where the speedup comes from</span>
-<div class="viewcode-block" id="PReLIM.impute_many"><a class="viewcode-back" href="../index.html#PReLIM.PReLIM.impute_many">[docs]</a>	<span class="k">def</span> <span class="nf">impute_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrices</span><span class="p">):</span>
+<div class="viewcode-block" id="PReLIM.impute_many"><a class="viewcode-back" href="../api.html#PReLIM.PReLIM.impute_many">[docs]</a>	<span class="k">def</span> <span class="nf">impute_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrices</span><span class="p">):</span>
 		<span class="sd">&#39;&#39;&#39;</span>
 <span class="sd">		Imputes a bunch of matrices at the same time to help speed up imputation time.</span>
 <span class="sd">	</span>

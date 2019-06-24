@@ -1,20 +1,24 @@
-.. PReLIM documentation master file, created by
-   sphinx-quickstart on Mon Jun  3 10:26:11 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+======================================================
+PReLIM: Precise Read-Level Imputation of Methylation
+======================================================
 
-Welcome to PReLIM's documentation!
-==================================
+
+What is PReLIM?
+===================================
+CluBCpG is a python package that uses machine learning to imputes missing CpG methylation data at the read-level. PReLIM is integrated into CluBCpG 
+for easy use.
+
 
 .. toctree::
    :maxdepth: 3
+   :numbered:
    :caption: Contents:
 
+   intro.rst
+   usage.rst
+   api.rst
 
-Main API
-======================
-.. automodule:: PReLIM
-   :members:
+
 
 Indices and tables
 ==================
