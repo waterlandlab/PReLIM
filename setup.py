@@ -5,5 +5,5 @@ setup(
     version='0.1',
     packages=['src',],
     license='MIT',
-    long_description=open('README.txt').read(),
+    long_description=open('README.md').read(),
 )
