@@ -17,11 +17,8 @@ setup(name="prelim",
           'seaborn', 
           'scipy', 
           'pandas',
-          'pickle',
           'fastcluster', 
           'pebble', 
           'tqdm'],
-
-     
 
 )
