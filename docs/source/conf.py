@@ -14,8 +14,8 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../src'))
-sys.setrecursionlimit(1500)
+sys.path.insert(0, os.path.abspath('../../src/'))
+#sys.setrecursionlimit(1500)
 
 
 # -- Project information -----------------------------------------------------
