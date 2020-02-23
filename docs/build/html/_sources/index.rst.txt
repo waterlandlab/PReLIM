@@ -17,6 +17,7 @@ for easy use.
    intro.rst
    usage.rst
    api.rst
+   standalone.rst
 
 
 

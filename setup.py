@@ -9,6 +9,7 @@ setup(name="prelim",
       packages=['src'],
 
       install_requires=[
+          'clubcpg',
           'pysam', 
           'numpy', 
           'matplotlib>3,<3.1', 

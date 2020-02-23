@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>PReLIM: Precise Read-Level Imputation of Methylation &mdash; PReLIM 1.0 documentation</title>
+  <title>4. Standalone Imputation Tool &mdash; PReLIM 1.0 documentation</title>
   
 
   
@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="1. Getting Started" href="intro.html" /> 
+    <link rel="prev" title="3. Main API" href="api.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -50,7 +50,7 @@
           
 
           
-            <a href="#" class="icon icon-home"> PReLIM
+            <a href="index.html" class="icon icon-home"> PReLIM
           
 
           
@@ -85,11 +85,15 @@
             
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="intro.html">1. Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">2. Using PReLIM</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">3. Main API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="standalone.html">4. Standalone Imputation Tool</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">4. Standalone Imputation Tool</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">4.1. Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">4.2. Usage</a></li>
+</ul>
+</li>
 </ul>
 
             
@@ -104,7 +108,7 @@
       <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">PReLIM</a>
+          <a href="index.html">PReLIM</a>
         
       </nav>
 
@@ -133,15 +137,15 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="#">Docs</a> &raquo;</li>
+      <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>PReLIM: Precise Read-Level Imputation of Methylation</li>
+      <li>4. Standalone Imputation Tool</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/standalone.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -154,40 +158,40 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="prelim-precise-read-level-imputation-of-methylation">
-<h1>PReLIM: Precise Read-Level Imputation of Methylation<a class="headerlink" href="#prelim-precise-read-level-imputation-of-methylation" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="what-is-prelim">
-<h2>What is PReLIM?<a class="headerlink" href="#what-is-prelim" title="Permalink to this headline">¶</a></h2>
-<p>CluBCpG is a python package that uses machine learning to imputes missing CpG methylation data at the read-level. PReLIM is integrated into CluBCpG
-for easy use.</p>
-<div class="toctree-wrapper compound">
-<p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="intro.html">1. Getting Started</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="intro.html#requirements">1.1. Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="intro.html#installation">1.2. Installation</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">2. Using PReLIM</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="usage.html#getting-started">2.1. Getting Started</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api.html">3. Main API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="standalone.html">4. Standalone Imputation Tool</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="standalone.html#requirements">4.1. Requirements</a></li>
-<li class="toctree-l2"><a class="reference internal" href="standalone.html#usage">4.2. Usage</a></li>
-</ul>
-</li>
-</ul>
-</div>
-</div>
-<div class="section" id="indices-and-tables">
-<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="standalone-imputation-tool">
+<h1>4. Standalone Imputation Tool<a class="headerlink" href="#standalone-imputation-tool" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="requirements">
+<h2>4.1. Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+<li><p>Python 3.5+ (could maybe get by on 3.0+ but don’t risk it)</p></li>
+<li><p>Any *nix operating system</p></li>
+<li><p>All the stuff in the requirements file</p></li>
+<li><p>ClubCpG (just for the BAM file parsing)</p></li>
 </ul>
+</div>
+<div class="section" id="usage">
+<h2>4.2. Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>PReLIM has a standlone tool that can be used to convert BAM files directly
+into DSS format without using ClubCpG. It is easy to use and can train new models
+or use existing ones. Note: It is highly recommended to do this on a chromosome-by-chromosome
+basis!</p>
+<ol class="arabic">
+<li><p>BAM to DSS without imputation</p>
+<blockquote>
+<div><p>python bam2dss.py -i input.bam, -c chr19 -o output.txt</p>
+</div></blockquote>
+</li>
+<li><p>BAM to DSS with imputation using existing models</p>
+<blockquote>
+<div><p>python bam2dss.py -i input.bam, -c chr19 -o output.txt -p -m model_prefix</p>
+</div></blockquote>
+</li>
+<li><p>BAM to DSS with imputation using new models (you’ll probably be using this one)</p>
+<blockquote>
+<div><p>python bam2dss.py -i input.bam, -c chr19 -o output.txt -p</p>
+</div></blockquote>
+</li>
+</ol>
 </div>
 </div>
 
@@ -199,8 +203,8 @@ for easy use.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="intro.html" class="btn btn-neutral float-right" title="1. Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
+        <a href="api.html" class="btn btn-neutral float-left" title="3. Main API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
